@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { Patient } from '@/types/patient';
-import { Prescription } from '@/types/prescription';
+import { Patient, Prescription } from '@/types/patient';
 
 interface PrescriptionsListProps {
   prescriptions: Prescription[];
