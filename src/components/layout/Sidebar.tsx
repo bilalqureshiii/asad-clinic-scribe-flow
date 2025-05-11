@@ -1,13 +1,25 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { User, FileText, UserPlus, Calendar, Settings, LogOut } from 'lucide-react';
 
+// Logo storage key constant from OrganizationBranding
+const LOGO_STORAGE_KEY = 'al_asad_clinic_logo';
+
 const Sidebar: React.FC = () => {
   const { profile, logout } = useAuth();
   const location = useLocation();
+  const [logo, setLogo] = useState<string | null>(null);
+
+  // Load the logo from localStorage when the component mounts
+  useEffect(() => {
+    const savedLogo = localStorage.getItem(LOGO_STORAGE_KEY);
+    if (savedLogo) {
+      setLogo(savedLogo);
+    }
+  }, []);
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -37,7 +49,19 @@ const Sidebar: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-sidebar p-4 text-sidebar-foreground w-64 border-r border-slate-200">
       <div className="py-4 mb-10">
-        <h1 className="text-xl font-bold text-center">Al-Asad Clinic</h1>
+        {logo ? (
+          <div className="flex justify-center mb-3">
+            <div className="h-16 w-auto max-w-full overflow-hidden">
+              <img 
+                src={logo} 
+                alt="Organization Logo" 
+                className="h-full max-h-16 w-auto object-contain"
+              />
+            </div>
+          </div>
+        ) : (
+          <h1 className="text-xl font-bold text-center mb-3">Al-Asad Clinic</h1>
+        )}
         {profile && (
           <div className="mt-2 text-center text-sm opacity-75">
             <div>Logged in as:</div>
