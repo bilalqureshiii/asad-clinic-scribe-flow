@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface UserSettings {
   id?: string;
   user_id: string;
-  logo_url?: string | null;
   sidebar_color?: string | null;
   background_color?: string | null;
   primary_color?: string | null;

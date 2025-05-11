@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      global_settings: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       medical_histories: {
         Row: {
           created_at: string
@@ -240,7 +261,6 @@ export type Database = {
           background_color: string | null
           created_at: string
           id: string
-          logo_url: string | null
           primary_color: string | null
           sidebar_color: string | null
           updated_at: string
@@ -250,7 +270,6 @@ export type Database = {
           background_color?: string | null
           created_at?: string
           id?: string
-          logo_url?: string | null
           primary_color?: string | null
           sidebar_color?: string | null
           updated_at?: string
@@ -260,7 +279,6 @@ export type Database = {
           background_color?: string | null
           created_at?: string
           id?: string
-          logo_url?: string | null
           primary_color?: string | null
           sidebar_color?: string | null
           updated_at?: string

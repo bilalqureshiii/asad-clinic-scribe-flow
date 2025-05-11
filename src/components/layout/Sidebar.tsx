@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -6,10 +7,7 @@ import { User, FileText, UserPlus, Calendar, Settings, LogOut, X } from 'lucide-
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useUserSettings } from '@/hooks/useUserSettings';
-
-// Logo storage key constant from OrganizationBranding
-const LOGO_STORAGE_KEY = 'al_asad_clinic_logo';
+import { useGlobalSettings } from '@/hooks/useGlobalSettings';
 
 interface SidebarProps {
   onClose?: () => void;
@@ -20,9 +18,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const location = useLocation();
   const [logo, setLogo] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const { settings } = useUserSettings();
+  const { settings } = useGlobalSettings();
 
-  // Load the logo from settings
+  // Load the logo from global settings
   useEffect(() => {
     if (settings?.logo_url) {
       setLogo(settings.logo_url);
