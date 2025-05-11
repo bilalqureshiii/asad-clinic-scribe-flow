@@ -11,6 +11,9 @@ const Index = () => {
     // Automatically redirect to the dashboard if authenticated
     if (isAuthenticated) {
       navigate('/dashboard');
+    } else {
+      // If not authenticated, the AppLayout will show the login page
+      console.log('Not authenticated, showing login page');
     }
   }, [isAuthenticated, navigate]);
 

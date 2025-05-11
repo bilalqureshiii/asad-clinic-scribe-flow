@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Patient } from '@/types/patient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -67,7 +68,18 @@ const PatientRegistration: React.FC = () => {
 
   const onSubmit = (data: FormValues) => {
     try {
-      const newPatient = addPatient(data);
+      // Ensure all required fields are present and convert optional fields as needed
+      const patientData: Omit<Patient, 'id' | 'mrNumber' | 'registrationDate'> = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        dateOfBirth: data.dateOfBirth,
+        gender: data.gender,
+        contactNumber: data.contactNumber,
+        email: data.email || undefined,
+        address: data.address || undefined,
+      };
+      
+      const newPatient = addPatient(patientData);
       
       toast({
         title: 'Patient registered successfully',

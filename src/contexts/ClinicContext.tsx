@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Patient, Prescription, Payment, MedicalHistory } from '@/types/patient';
 
@@ -6,14 +5,14 @@ interface ClinicContextType {
   patients: Patient[];
   prescriptions: Prescription[];
   payments: Payment[];
-  addPatient: (patient: Omit<Patient, 'id' | 'mrNumber' | 'registrationDate'>) => void;
+  addPatient: (patient: Omit<Patient, 'id' | 'mrNumber' | 'registrationDate'>) => Patient;
   getPatientById: (id: string) => Patient | undefined;
   getPatientByMrNumber: (mrNumber: string) => Patient | undefined;
-  addPrescription: (prescription: Omit<Prescription, 'id'>) => void;
+  addPrescription: (prescription: Omit<Prescription, 'id'>) => Prescription;
   getPrescriptionsByPatientId: (patientId: string) => Prescription[];
-  addPayment: (payment: Omit<Payment, 'id'>) => void;
+  addPayment: (payment: Omit<Payment, 'id'>) => Payment;
   getPaymentsByPatientId: (patientId: string) => Payment[];
-  addMedicalHistory: (patientId: string, history: Omit<MedicalHistory, 'id'>) => void;
+  addMedicalHistory: (patientId: string, history: Omit<MedicalHistory, 'id'>) => MedicalHistory;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
