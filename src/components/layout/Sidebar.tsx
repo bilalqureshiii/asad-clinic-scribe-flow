@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-sidebar p-4 text-sidebar-foreground w-64 border-r border-slate-200">
+    <div className="flex flex-col h-full bg-sidebar p-4 text-sidebar-foreground w-full border-r border-slate-200">
       {isMobile && (
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-semibold">Menu</h2>

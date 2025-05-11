@@ -48,6 +48,14 @@
   color: #888;
 }
 
+/* Fix for sidebar on desktop */
+@media (min-width: 768px) {
+  .md\:h-screen {
+    height: 100vh;
+    min-height: 100vh;
+  }
+}
+
 /* Mobile-specific styles */
 @media (max-width: 768px) {
   h1 {

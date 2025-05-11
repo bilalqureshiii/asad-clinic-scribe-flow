@@ -47,8 +47,8 @@ const AppLayout: React.FC = () => {
 
       {/* Sidebar - conditional display on mobile */}
       <div className={`
-        ${isMobile ? (showSidebar ? 'block fixed inset-0 z-50' : 'hidden') : 'block'} 
-        md:relative md:block
+        ${isMobile ? (showSidebar ? 'block fixed inset-0 z-50' : 'hidden') : 'block w-64'} 
+        md:relative md:block md:h-screen
       `}>
         {isMobile && showSidebar && (
           <div 
@@ -57,7 +57,7 @@ const AppLayout: React.FC = () => {
           />
         )}
         <div className={`
-          ${isMobile ? 'w-64 h-full z-50 fixed' : 'w-auto'} 
+          ${isMobile ? 'w-64 h-full z-50 fixed' : 'w-full h-full'} 
           relative
         `}>
           <Sidebar onClose={() => setShowSidebar(false)} />
