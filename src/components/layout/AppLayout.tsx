@@ -4,9 +4,19 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/LoginPage';
+import { Loader2 } from 'lucide-react';
 
 const AppLayout: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-clinic-teal" />
+        <span className="ml-2 text-lg">Loading...</span>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <LoginPage />;

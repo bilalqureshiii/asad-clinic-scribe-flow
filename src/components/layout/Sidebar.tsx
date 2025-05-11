@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { User, FileText, UserPlus, Calendar, Settings, LogOut } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { profile, logout } = useAuth();
   const location = useLocation();
 
   const isActive = (path: string) => {
@@ -38,11 +38,11 @@ const Sidebar: React.FC = () => {
     <div className="flex flex-col h-full bg-sidebar p-4 text-sidebar-foreground w-64 border-r border-slate-200">
       <div className="py-4 mb-10">
         <h1 className="text-xl font-bold text-center">Al-Asad Clinic</h1>
-        {user && (
+        {profile && (
           <div className="mt-2 text-center text-sm opacity-75">
             <div>Logged in as:</div>
-            <div className="font-semibold">{user.name}</div>
-            <div className="capitalize">{user.role}</div>
+            <div className="font-semibold">{profile.name}</div>
+            <div className="capitalize">{profile.role}</div>
           </div>
         )}
       </div>
@@ -60,13 +60,13 @@ const Sidebar: React.FC = () => {
           Prescriptions
         </NavItem>
         
-        {(user?.role === 'staff' || user?.role === 'admin') && (
+        {(profile?.role === 'staff' || profile?.role === 'admin') && (
           <NavItem href="/registration" icon={<UserPlus className="h-4 w-4" />}>
             New Registration
           </NavItem>
         )}
         
-        {user?.role === 'admin' && (
+        {profile?.role === 'admin' && (
           <NavItem href="/settings" icon={<Settings className="h-4 w-4" />}>
             Settings
           </NavItem>

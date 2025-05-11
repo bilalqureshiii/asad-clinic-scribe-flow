@@ -1,173 +1,220 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import { Patient, Prescription, Payment, MedicalHistory } from '@/types/patient';
+import { patientService } from '@/services/patientService';
+import { prescriptionService } from '@/services/prescriptionService';
+import { useToast } from '@/components/ui/use-toast';
 
 interface ClinicContextType {
   patients: Patient[];
   prescriptions: Prescription[];
   payments: Payment[];
-  addPatient: (patient: Omit<Patient, 'id' | 'mrNumber' | 'registrationDate'>) => Patient;
-  getPatientById: (id: string) => Patient | undefined;
-  getPatientByMrNumber: (mrNumber: string) => Patient | undefined;
-  addPrescription: (prescription: Omit<Prescription, 'id'>) => Prescription;
-  getPrescriptionsByPatientId: (patientId: string) => Prescription[];
-  addPayment: (payment: Omit<Payment, 'id'>) => Payment;
-  getPaymentsByPatientId: (patientId: string) => Payment[];
-  addMedicalHistory: (patientId: string, history: Omit<MedicalHistory, 'id'>) => MedicalHistory;
+  isLoading: boolean;
+  addPatient: (patient: Omit<Patient, 'id' | 'mrNumber' | 'registrationDate' | 'medicalHistory'>) => Promise<Patient>;
+  getPatientById: (id: string) => Promise<Patient | null>;
+  getPatientByMrNumber: (mrNumber: string) => Promise<Patient | null>;
+  addPrescription: (prescription: Omit<Prescription, 'id'>) => Promise<Prescription>;
+  getPrescriptionsByPatientId: (patientId: string) => Promise<Prescription[]>;
+  addPayment: (payment: Omit<Payment, 'id'>) => Promise<Payment>;
+  getPaymentsByPatientId: (patientId: string) => Promise<Payment[]>;
+  addMedicalHistory: (patientId: string, history: Omit<MedicalHistory, 'id'>) => Promise<MedicalHistory>;
+  refreshData: () => Promise<void>;
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
 
-// Mock data for patients
-const mockPatients: Patient[] = [
-  {
-    id: 'patient-1',
-    mrNumber: 'MR00001',
-    firstName: 'Fatima',
-    lastName: 'Aziz',
-    dateOfBirth: '1985-05-15',
-    gender: 'female',
-    contactNumber: '0300-1234567',
-    email: 'fatima@example.com',
-    address: 'House 123, Street 4, Islamabad',
-    registrationDate: '2023-01-10',
-    medicalHistory: [
-      {
-        id: 'history-1',
-        date: '2023-01-15',
-        diagnosis: 'Hypertension',
-        notes: 'Patient presented with high blood pressure. Advised lifestyle changes.',
-        prescriptionId: 'prescription-1'
-      }
-    ]
-  },
-  {
-    id: 'patient-2',
-    mrNumber: 'MR00002',
-    firstName: 'Ali',
-    lastName: 'Hassan',
-    dateOfBirth: '1990-10-20',
-    gender: 'male',
-    contactNumber: '0321-7654321',
-    email: 'ali@example.com',
-    address: 'Flat 4B, Plaza Heights, Lahore',
-    registrationDate: '2023-02-05',
-    medicalHistory: []
-  }
-];
-
-// Mock data for prescriptions
-const mockPrescriptions: Prescription[] = [
-  {
-    id: 'prescription-1',
-    patientId: 'patient-1',
-    doctorId: 'doctor-1',
-    date: '2023-01-15',
-    imageUrl: '/placeholder.svg',
-    notes: 'Take medicine after meals',
-    status: 'completed',
-    fee: 1500,
-    discount: 0,
-    paymentStatus: 'paid'
-  }
-];
-
-// Mock data for payments
-const mockPayments: Payment[] = [
-  {
-    id: 'payment-1',
-    prescriptionId: 'prescription-1',
-    patientId: 'patient-1',
-    amount: 1500,
-    date: '2023-01-15',
-    method: 'cash',
-    notes: 'Full payment received'
-  }
-];
-
 export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [patients, setPatients] = useState<Patient[]>(mockPatients);
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>(mockPrescriptions);
-  const [payments, setPayments] = useState<Payment[]>(mockPayments);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
-  const generateMrNumber = () => {
-    const lastMrNumber = patients.length > 0 
-      ? parseInt(patients[patients.length - 1].mrNumber.replace('MR', ''))
-      : 0;
-    return `MR${String(lastMrNumber + 1).padStart(5, '0')}`;
-  };
+  const loadData = async () => {
+    if (!isAuthenticated) {
+      setPatients([]);
+      setPrescriptions([]);
+      setPayments([]);
+      setIsLoading(false);
+      return;
+    }
 
-  const addPatient = (patientData: Omit<Patient, 'id' | 'mrNumber' | 'registrationDate'>) => {
-    const newPatient: Patient = {
-      ...patientData,
-      id: `patient-${Date.now()}`,
-      mrNumber: generateMrNumber(),
-      registrationDate: new Date().toISOString().split('T')[0],
-      medicalHistory: []
-    };
-    setPatients([...patients, newPatient]);
-    return newPatient;
-  };
+    setIsLoading(true);
+    try {
+      // Load data in parallel
+      const [patientsData, prescriptionsData] = await Promise.all([
+        patientService.getAllPatients(),
+        prescriptionService.getAllPrescriptions()
+      ]);
+      
+      // We don't load all payments at once as it might be a large dataset
+      // Instead, we'll load them on demand per patient
 
-  const getPatientById = (id: string) => {
-    return patients.find(patient => patient.id === id);
-  };
-
-  const getPatientByMrNumber = (mrNumber: string) => {
-    return patients.find(patient => patient.mrNumber === mrNumber);
-  };
-
-  const addPrescription = (prescriptionData: Omit<Prescription, 'id'>) => {
-    const newPrescription: Prescription = {
-      ...prescriptionData,
-      id: `prescription-${Date.now()}`
-    };
-    setPrescriptions([...prescriptions, newPrescription]);
-    return newPrescription;
-  };
-
-  const getPrescriptionsByPatientId = (patientId: string) => {
-    return prescriptions.filter(prescription => prescription.patientId === patientId);
-  };
-
-  const addPayment = (paymentData: Omit<Payment, 'id'>) => {
-    const newPayment: Payment = {
-      ...paymentData,
-      id: `payment-${Date.now()}`
-    };
-    setPayments([...payments, newPayment]);
-
-    // Update prescription payment status if applicable
-    setPrescriptions(prescriptions.map(prescription => {
-      if (prescription.id === paymentData.prescriptionId) {
-        return { ...prescription, paymentStatus: 'paid' };
+      setPatients(patientsData);
+      setPrescriptions(prescriptionsData);
+      
+      // For demo purposes, let's load payments for the first few patients
+      if (patientsData.length > 0) {
+        const patientIds = patientsData.slice(0, 5).map(p => p.id);
+        const paymentsPromises = patientIds.map(id => prescriptionService.getPaymentsByPatientId(id));
+        const paymentsArrays = await Promise.all(paymentsPromises);
+        const allPayments = paymentsArrays.flat();
+        setPayments(allPayments);
       }
-      return prescription;
-    }));
-
-    return newPayment;
+    } catch (error) {
+      console.error("Error loading clinic data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load clinic data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const getPaymentsByPatientId = (patientId: string) => {
-    return payments.filter(payment => payment.patientId === patientId);
+  // Load data when authentication state changes
+  useEffect(() => {
+    loadData();
+  }, [isAuthenticated]);
+
+  const refreshData = async () => {
+    await loadData();
   };
 
-  const addMedicalHistory = (patientId: string, historyData: Omit<MedicalHistory, 'id'>) => {
-    const newHistory: MedicalHistory = {
-      ...historyData,
-      id: `history-${Date.now()}`
-    };
-
-    setPatients(patients.map(patient => {
-      if (patient.id === patientId) {
-        return {
-          ...patient,
-          medicalHistory: [...(patient.medicalHistory || []), newHistory]
-        };
-      }
+  const getPatientById = async (id: string): Promise<Patient | null> => {
+    try {
+      const patient = await patientService.getPatientById(id);
       return patient;
-    }));
+    } catch (error) {
+      console.error("Error getting patient by ID:", error);
+      return null;
+    }
+  };
 
-    return newHistory;
+  const getPatientByMrNumber = async (mrNumber: string): Promise<Patient | null> => {
+    try {
+      // Find in the loaded data first
+      const cachedPatient = patients.find(p => p.mrNumber === mrNumber);
+      if (cachedPatient) return cachedPatient;
+
+      // Otherwise load all patients and search
+      const allPatients = await patientService.getAllPatients();
+      const patient = allPatients.find(p => p.mrNumber === mrNumber);
+      return patient || null;
+    } catch (error) {
+      console.error("Error getting patient by MR number:", error);
+      return null;
+    }
+  };
+
+  const addPatient = async (patientData: Omit<Patient, 'id' | 'mrNumber' | 'registrationDate' | 'medicalHistory'>): Promise<Patient> => {
+    try {
+      const newPatient = await patientService.createPatient(patientData);
+      
+      // Update local state
+      setPatients(prevPatients => [newPatient, ...prevPatients]);
+      
+      return newPatient;
+    } catch (error) {
+      console.error("Error adding patient:", error);
+      throw error;
+    }
+  };
+
+  const addPrescription = async (prescriptionData: Omit<Prescription, 'id'>): Promise<Prescription> => {
+    try {
+      const newPrescription = await prescriptionService.createPrescription(prescriptionData);
+      
+      // Update local state
+      setPrescriptions(prevPrescriptions => [newPrescription, ...prevPrescriptions]);
+      
+      return newPrescription;
+    } catch (error) {
+      console.error("Error adding prescription:", error);
+      throw error;
+    }
+  };
+
+  const getPrescriptionsByPatientId = async (patientId: string): Promise<Prescription[]> => {
+    try {
+      // Try from cache first
+      const cachedPrescriptions = prescriptions.filter(p => p.patientId === patientId);
+      if (cachedPrescriptions.length > 0) return cachedPrescriptions;
+      
+      // Otherwise load from the database
+      return await prescriptionService.getPrescriptionsByPatientId(patientId);
+    } catch (error) {
+      console.error("Error getting prescriptions by patient ID:", error);
+      return [];
+    }
+  };
+
+  const addPayment = async (paymentData: Omit<Payment, 'id'>): Promise<Payment> => {
+    try {
+      const newPayment = await prescriptionService.addPayment(paymentData);
+      
+      // Update local state
+      setPayments(prevPayments => [newPayment, ...prevPayments]);
+      
+      // Update prescription payment status in local state
+      setPrescriptions(prevPrescriptions => 
+        prevPrescriptions.map(prescription => {
+          if (prescription.id === paymentData.prescriptionId) {
+            return { ...prescription, paymentStatus: 'paid' };
+          }
+          return prescription;
+        })
+      );
+      
+      return newPayment;
+    } catch (error) {
+      console.error("Error adding payment:", error);
+      throw error;
+    }
+  };
+
+  const getPaymentsByPatientId = async (patientId: string): Promise<Payment[]> => {
+    try {
+      // Try from cache first
+      const cachedPayments = payments.filter(p => p.patientId === patientId);
+      if (cachedPayments.length > 0) return cachedPayments;
+      
+      // Otherwise load from the database
+      return await prescriptionService.getPaymentsByPatientId(patientId);
+    } catch (error) {
+      console.error("Error getting payments by patient ID:", error);
+      return [];
+    }
+  };
+
+  const addMedicalHistory = async (patientId: string, historyData: Omit<MedicalHistory, 'id'>): Promise<MedicalHistory> => {
+    try {
+      const newHistory = await patientService.addMedicalHistory(patientId, historyData);
+      
+      // Update local state (find and update patient)
+      setPatients(prevPatients => 
+        prevPatients.map(patient => {
+          if (patient.id === patientId) {
+            const updatedMedicalHistory = [
+              ...(patient.medicalHistory || []),
+              newHistory
+            ];
+            return {
+              ...patient,
+              medicalHistory: updatedMedicalHistory
+            };
+          }
+          return patient;
+        })
+      );
+      
+      return newHistory;
+    } catch (error) {
+      console.error("Error adding medical history:", error);
+      throw error;
+    }
   };
 
   return (
@@ -175,6 +222,7 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       patients,
       prescriptions,
       payments,
+      isLoading,
       addPatient,
       getPatientById,
       getPatientByMrNumber,
@@ -182,7 +230,8 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       getPrescriptionsByPatientId,
       addPayment,
       getPaymentsByPatientId,
-      addMedicalHistory
+      addMedicalHistory,
+      refreshData
     }}>
       {children}
     </ClinicContext.Provider>
