@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useToast } from '@/components/ui/use-toast';
+import { prescriptionService } from '@/services/prescriptionService';
 
 interface PrescriptionsListProps {
   prescriptions: Prescription[];
@@ -27,7 +28,7 @@ const PrescriptionsList: React.FC<PrescriptionsListProps> = ({
   const handleDelete = async (prescriptionId: string) => {
     try {
       // Call the deletePrescription method from the prescriptionService
-      await deletePrescription(prescriptionId);
+      await prescriptionService.deletePrescription(prescriptionId);
       
       // Show success toast
       toast({
@@ -87,20 +88,6 @@ const PrescriptionsList: React.FC<PrescriptionsListProps> = ({
       )}
     </div>
   );
-};
-
-// Function to delete a prescription from the database
-const deletePrescription = async (id: string) => {
-  const { supabase } = await import('@/integrations/supabase/client');
-  const { error } = await supabase
-    .from('prescriptions')
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
-    console.error('Error deleting prescription:', error);
-    throw new Error(error.message);
-  }
 };
 
 export default PrescriptionsList;

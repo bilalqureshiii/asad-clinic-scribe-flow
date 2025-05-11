@@ -47,6 +47,17 @@ const PatientDetail: React.FC = () => {
     fetchData();
   }, [patientId, getPatientById, getPrescriptionsByPatientId, getPaymentsByPatientId]);
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    
+    // If switching to prescriptions tab, refresh prescription data
+    if (tab === 'prescriptions' && patientId) {
+      getPrescriptionsByPatientId(patientId).then(data => {
+        setPrescriptions(data);
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
@@ -96,7 +107,7 @@ const PatientDetail: React.FC = () => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid grid-cols-4 mb-6">
           <TabsTrigger value="details">Patient Details</TabsTrigger>
           <TabsTrigger value="history">Medical History</TabsTrigger>
