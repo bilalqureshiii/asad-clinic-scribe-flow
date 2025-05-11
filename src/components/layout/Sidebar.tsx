@@ -3,16 +3,23 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, FileText, UserPlus, Calendar, Settings, LogOut } from 'lucide-react';
+import { User, FileText, UserPlus, Calendar, Settings, LogOut, X } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Logo storage key constant from OrganizationBranding
 const LOGO_STORAGE_KEY = 'al_asad_clinic_logo';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { profile, logout } = useAuth();
   const location = useLocation();
   const [logo, setLogo] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   // Load the logo from localStorage when the component mounts
   useEffect(() => {
@@ -26,6 +33,13 @@ const Sidebar: React.FC = () => {
     return location.pathname === path;
   };
 
+  const handleLogout = () => {
+    if (onClose) {
+      onClose();
+    }
+    logout();
+  };
+
   const NavItem: React.FC<{ href: string; icon: React.ReactNode; children: React.ReactNode }> = ({ 
     href, 
     icon, 
@@ -34,6 +48,7 @@ const Sidebar: React.FC = () => {
     return (
       <Link
         to={href}
+        onClick={onClose}
         className={cn(
           "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
           isActive(href) 
@@ -49,6 +64,20 @@ const Sidebar: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-sidebar p-4 text-sidebar-foreground w-64 border-r border-slate-200">
+      {isMobile && (
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-semibold">Menu</h2>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={onClose}
+            className="text-white hover:bg-sidebar-accent"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
+      
       <div className="py-4 mb-10">
         {logo ? (
           <div className="flex justify-center mb-3">
@@ -101,7 +130,7 @@ const Sidebar: React.FC = () => {
       
       <div className="border-t border-sidebar-border pt-4 mt-auto">
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm w-full text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
         >
           <LogOut className="h-4 w-4" />

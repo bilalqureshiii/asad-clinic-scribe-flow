@@ -1,13 +1,17 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/LoginPage';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const AppLayout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const isMobile = useIsMobile();
+  const [showSidebar, setShowSidebar] = useState(false);
 
   if (isLoading) {
     return (
@@ -23,9 +27,45 @@ const AppLayout: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <main className="flex-1 overflow-auto bg-background p-6">
+    <div className="flex h-screen flex-col md:flex-row">
+      {/* Mobile Header */}
+      {isMobile && (
+        <div className="bg-sidebar flex items-center justify-between p-3 text-sidebar-foreground">
+          <div className="flex items-center">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="mr-2 text-white hover:bg-sidebar-accent"
+              onClick={() => setShowSidebar(!showSidebar)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <span className="font-semibold">Al-Asad Clinic</span>
+          </div>
+        </div>
+      )}
+
+      {/* Sidebar - conditional display on mobile */}
+      <div className={`
+        ${isMobile ? (showSidebar ? 'block fixed inset-0 z-50' : 'hidden') : 'block'} 
+        md:relative md:block
+      `}>
+        {isMobile && showSidebar && (
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setShowSidebar(false)}
+          />
+        )}
+        <div className={`
+          ${isMobile ? 'w-64 h-full z-50 fixed' : 'w-auto'} 
+          relative
+        `}>
+          <Sidebar onClose={() => setShowSidebar(false)} />
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto bg-background p-3 md:p-6">
         <Outlet />
       </main>
     </div>

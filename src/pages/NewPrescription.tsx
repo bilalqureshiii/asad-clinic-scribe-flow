@@ -11,6 +11,8 @@ import { usePrescriptionTemplate } from '@/hooks/usePrescriptionTemplate';
 import PatientInfoCard from '@/components/prescriptions/PatientInfoCard';
 import PrescriptionCanvas from '@/components/prescriptions/PrescriptionCanvas';
 import PrescriptionDetailsForm, { PrescriptionFormValues } from '@/components/prescriptions/PrescriptionDetailsForm';
+import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const NewPrescription: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
@@ -23,6 +25,7 @@ const NewPrescription: React.FC = () => {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
   const { headerSettings, footerSettings } = usePrescriptionTemplate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const loadPatient = async () => {
@@ -147,19 +150,19 @@ const NewPrescription: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-clinic-navy mb-6">New Prescription</h1>
+      <h1 className="text-2xl md:text-3xl font-bold text-clinic-navy mb-4 md:mb-6">New Prescription</h1>
       
-      <div className="mb-6">
+      <div className="mb-4 md:mb-6">
         <PatientInfoCard patient={patient} />
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         <div className="lg:col-span-2">
           <Card>
-            <CardHeader>
-              <CardTitle>Write Prescription</CardTitle>
+            <CardHeader className="p-3 md:p-6">
+              <CardTitle className="text-lg md:text-xl">Write Prescription</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 md:p-6">
               <PrescriptionCanvas 
                 prescriptionImage={prescriptionImage}
                 setPrescriptionImage={setPrescriptionImage}
