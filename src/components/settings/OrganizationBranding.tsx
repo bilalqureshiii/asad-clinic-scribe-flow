@@ -9,11 +9,11 @@ import { ImagePlus, AlertCircle, Loader2, Palette } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { useUserSettings } from '@/hooks/useUserSettings';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
-// This would normally be stored in your database
-// For this demo, we'll use localStorage
-const LOGO_STORAGE_KEY = 'al_asad_clinic_logo';
-const COLOR_STORAGE_KEY_PREFIX = 'al_asad_clinic_color_';
+// Maximum file size and allowed file types
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml'];
 const ALLOWED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.svg'];
@@ -31,6 +31,9 @@ const colorOptions = [
 ];
 
 const OrganizationBranding: React.FC = () => {
+  const { user } = useAuth();
+  const { settings, loading: settingsLoading, saveSettings } = useUserSettings();
+  
   const [logo, setLogo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -43,37 +46,33 @@ const OrganizationBranding: React.FC = () => {
   const [primaryColor, setPrimaryColor] = useState<string>('#20B2AA'); // Default primary color
 
   useEffect(() => {
-    // Load logo and colors from localStorage
-    const savedLogo = localStorage.getItem(LOGO_STORAGE_KEY);
-    const savedSidebarColor = localStorage.getItem(`${COLOR_STORAGE_KEY_PREFIX}sidebar`);
-    const savedBackgroundColor = localStorage.getItem(`${COLOR_STORAGE_KEY_PREFIX}background`);
-    const savedPrimaryColor = localStorage.getItem(`${COLOR_STORAGE_KEY_PREFIX}primary`);
-    
-    if (savedLogo) {
-      setLogo(savedLogo);
+    if (!settingsLoading) {
+      // Set logo and colors from database settings
+      if (settings) {
+        if (settings.logo_url) {
+          setLogo(settings.logo_url);
+        }
+        
+        if (settings.sidebar_color) {
+          setSidebarColor(settings.sidebar_color);
+        }
+        
+        if (settings.background_color) {
+          setBackgroundColor(settings.background_color);
+        }
+        
+        if (settings.primary_color) {
+          setPrimaryColor(settings.primary_color);
+        }
+      }
+      
+      setLoading(false);
     }
-    
-    if (savedSidebarColor) {
-      setSidebarColor(savedSidebarColor);
-      document.documentElement.style.setProperty('--sidebar-background', hexToHsl(savedSidebarColor));
-    }
-    
-    if (savedBackgroundColor) {
-      setBackgroundColor(savedBackgroundColor);
-      document.documentElement.style.setProperty('--background', hexToHsl(savedBackgroundColor));
-    }
-    
-    if (savedPrimaryColor) {
-      setPrimaryColor(savedPrimaryColor);
-      document.documentElement.style.setProperty('--primary', hexToHsl(savedPrimaryColor));
-    }
-    
-    setLoading(false);
-  }, []);
+  }, [settings, settingsLoading]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     // Reset errors
     setError(null);
@@ -92,51 +91,110 @@ const OrganizationBranding: React.FC = () => {
 
     setUploading(true);
 
-    // Read the file and create a data URL
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setLogo(result);
-      
-      // In a real app, you would upload the file to a server here
-      // For this demo, we'll just store it in localStorage
-      localStorage.setItem(LOGO_STORAGE_KEY, result);
-      
-      setUploading(false);
-      toast({
-        title: "Logo Updated",
-        description: "Your organization logo has been updated successfully."
-      });
-    };
+    try {
+      // Create a unique filename for storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `logos/${fileName}`;
 
-    reader.onerror = () => {
-      setError("Failed to read the file. Please try again.");
-      setUploading(false);
-    };
+      // Read the file and create a data URL for preview
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const result = e.target?.result as string;
+        setLogo(result);
+        
+        // Save the logo URL to database
+        const success = await saveSettings({ 
+          logo_url: result
+        });
+        
+        if (success) {
+          toast({
+            title: "Logo Updated",
+            description: "Your organization logo has been updated successfully."
+          });
+        }
+        
+        setUploading(false);
+      };
 
-    reader.readAsDataURL(file);
+      reader.onerror = () => {
+        setError("Failed to read the file. Please try again.");
+        setUploading(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (error: any) {
+      setError(error.message || "Failed to upload logo. Please try again.");
+      setUploading(false);
+    }
   };
 
-  const handleRemoveLogo = () => {
+  const handleRemoveLogo = async () => {
     setLogo(null);
-    localStorage.removeItem(LOGO_STORAGE_KEY);
+    
+    // Save the removal to database
+    const success = await saveSettings({ logo_url: null });
+    
+    if (success) {
+      toast({
+        title: "Logo Removed",
+        description: "Your organization logo has been removed."
+      });
+    }
     
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    
-    toast({
-      title: "Logo Removed",
-      description: "Your organization logo has been removed."
-    });
   };
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
   
-  // Function to convert hex color to HSL format for CSS variables
+  // Handle color change for different UI elements
+  const handleColorChange = async (colorType: string, value: string) => {
+    switch (colorType) {
+      case 'sidebar':
+        setSidebarColor(value);
+        document.documentElement.style.setProperty('--sidebar-background', hexToHsl(value));
+        
+        await saveSettings({ sidebar_color: value });
+        
+        toast({
+          title: "Sidebar Color Updated",
+          description: "Your sidebar color has been updated."
+        });
+        break;
+        
+      case 'background':
+        setBackgroundColor(value);
+        document.documentElement.style.setProperty('--background', hexToHsl(value));
+        
+        await saveSettings({ background_color: value });
+        
+        toast({
+          title: "Background Color Updated",
+          description: "Your background color has been updated."
+        });
+        break;
+        
+      case 'primary':
+        setPrimaryColor(value);
+        document.documentElement.style.setProperty('--primary', hexToHsl(value));
+        
+        await saveSettings({ primary_color: value });
+        
+        toast({
+          title: "Primary Color Updated",
+          description: "Your primary accent color has been updated."
+        });
+        break;
+    }
+  };
+  
+  // Convert hex color to HSL format for CSS variables
   const hexToHsl = (hex: string): string => {
     // Convert hex to RGB
     let r = 0, g = 0, b = 0;
@@ -178,41 +236,8 @@ const OrganizationBranding: React.FC = () => {
     
     return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
   };
-  
-  // Handle color change for different UI elements
-  const handleColorChange = (colorType: string, value: string) => {
-    switch (colorType) {
-      case 'sidebar':
-        setSidebarColor(value);
-        localStorage.setItem(`${COLOR_STORAGE_KEY_PREFIX}sidebar`, value);
-        document.documentElement.style.setProperty('--sidebar-background', hexToHsl(value));
-        toast({
-          title: "Sidebar Color Updated",
-          description: "Your sidebar color has been updated."
-        });
-        break;
-      case 'background':
-        setBackgroundColor(value);
-        localStorage.setItem(`${COLOR_STORAGE_KEY_PREFIX}background`, value);
-        document.documentElement.style.setProperty('--background', hexToHsl(value));
-        toast({
-          title: "Background Color Updated",
-          description: "Your background color has been updated."
-        });
-        break;
-      case 'primary':
-        setPrimaryColor(value);
-        localStorage.setItem(`${COLOR_STORAGE_KEY_PREFIX}primary`, value);
-        document.documentElement.style.setProperty('--primary', hexToHsl(value));
-        toast({
-          title: "Primary Color Updated",
-          description: "Your primary accent color has been updated."
-        });
-        break;
-    }
-  };
 
-  if (loading) {
+  if (loading || settingsLoading) {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

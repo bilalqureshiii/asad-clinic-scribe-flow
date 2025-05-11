@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -7,6 +6,7 @@ import { User, FileText, UserPlus, Calendar, Settings, LogOut, X } from 'lucide-
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useUserSettings } from '@/hooks/useUserSettings';
 
 // Logo storage key constant from OrganizationBranding
 const LOGO_STORAGE_KEY = 'al_asad_clinic_logo';
@@ -20,14 +20,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const location = useLocation();
   const [logo, setLogo] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const { settings } = useUserSettings();
 
-  // Load the logo from localStorage when the component mounts
+  // Load the logo from settings
   useEffect(() => {
-    const savedLogo = localStorage.getItem(LOGO_STORAGE_KEY);
-    if (savedLogo) {
-      setLogo(savedLogo);
+    if (settings?.logo_url) {
+      setLogo(settings.logo_url);
     }
-  }, []);
+  }, [settings]);
 
   const isActive = (path: string) => {
     return location.pathname === path;
