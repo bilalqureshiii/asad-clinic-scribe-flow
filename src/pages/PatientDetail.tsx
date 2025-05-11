@@ -19,6 +19,13 @@ const PatientDetail: React.FC = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchPrescriptions = async () => {
+    if (patientId) {
+      const prescriptionsData = await getPrescriptionsByPatientId(patientId);
+      setPrescriptions(prescriptionsData);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -52,10 +59,13 @@ const PatientDetail: React.FC = () => {
     
     // If switching to prescriptions tab, refresh prescription data
     if (tab === 'prescriptions' && patientId) {
-      getPrescriptionsByPatientId(patientId).then(data => {
-        setPrescriptions(data);
-      });
+      fetchPrescriptions();
     }
+  };
+  
+  const handlePrescriptionDeleted = () => {
+    // Refresh prescriptions data after deletion
+    fetchPrescriptions();
   };
 
   if (loading) {
@@ -203,6 +213,7 @@ const PatientDetail: React.FC = () => {
                   prescriptions={prescriptions} 
                   patients={[patient]} 
                   showDelete={true}
+                  onPrescriptionDeleted={handlePrescriptionDeleted}
                 />
               ) : (
                 <p className="text-center py-10 text-gray-500">No prescriptions yet</p>

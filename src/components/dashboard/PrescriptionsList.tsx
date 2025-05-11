@@ -12,13 +12,15 @@ interface PrescriptionsListProps {
   patients: Patient[];
   limit?: number;
   showDelete?: boolean;
+  onPrescriptionDeleted?: () => void;
 }
 
 const PrescriptionsList: React.FC<PrescriptionsListProps> = ({ 
   prescriptions, 
   patients,
   limit = 5,
-  showDelete = false
+  showDelete = false,
+  onPrescriptionDeleted
 }) => {
   const { refreshData } = useClinic();
   const { toast } = useToast();
@@ -27,6 +29,8 @@ const PrescriptionsList: React.FC<PrescriptionsListProps> = ({
   // Function to handle prescription deletion
   const handleDelete = async (prescriptionId: string) => {
     try {
+      console.log("Delete button clicked for prescription:", prescriptionId);
+      
       // Call the deletePrescription method from the prescriptionService
       await prescriptionService.deletePrescription(prescriptionId);
       
@@ -38,6 +42,11 @@ const PrescriptionsList: React.FC<PrescriptionsListProps> = ({
       
       // Refresh data to update the UI
       await refreshData();
+      
+      // If a callback was provided, call it
+      if (onPrescriptionDeleted) {
+        onPrescriptionDeleted();
+      }
     } catch (error) {
       console.error("Error deleting prescription:", error);
       toast({
@@ -72,6 +81,7 @@ const PrescriptionsList: React.FC<PrescriptionsListProps> = ({
                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
                     onClick={(e) => {
                       e.preventDefault(); // Prevent navigation if this is in a link
+                      e.stopPropagation(); // Stop event propagation
                       handleDelete(prescription.id);
                     }}
                   >

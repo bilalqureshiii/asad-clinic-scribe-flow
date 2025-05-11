@@ -121,6 +121,7 @@ export const prescriptionService = {
   },
   
   async deletePrescription(id: string): Promise<void> {
+    console.log("Attempting to delete prescription with ID:", id);
     const { error } = await supabase
       .from('prescriptions')
       .delete()
@@ -130,6 +131,8 @@ export const prescriptionService = {
       console.error('Error deleting prescription:', error);
       throw new Error(error.message);
     }
+    
+    console.log("Successfully deleted prescription with ID:", id);
   },
   
   async addPayment(payment: Omit<Payment, 'id'>): Promise<Payment> {

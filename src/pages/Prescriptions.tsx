@@ -17,7 +17,7 @@ import { FileText, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Prescriptions: React.FC = () => {
-  const { prescriptions, patients } = useClinic();
+  const { prescriptions, patients, refreshData } = useClinic();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');

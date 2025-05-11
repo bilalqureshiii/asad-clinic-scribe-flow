@@ -81,6 +81,7 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, [isAuthenticated]);
 
   const refreshData = async () => {
+    console.log("Refreshing clinic data");
     await loadData();
   };
 
@@ -154,12 +155,15 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const deletePrescription = async (id: string): Promise<void> => {
     try {
+      console.log("ClinicContext: Deleting prescription with ID:", id);
       await prescriptionService.deletePrescription(id);
       
       // Update local state by removing the deleted prescription
       setPrescriptions(prevPrescriptions => 
         prevPrescriptions.filter(prescription => prescription.id !== id)
       );
+      
+      console.log("ClinicContext: Successfully deleted prescription, state updated");
     } catch (error) {
       console.error("Error deleting prescription:", error);
       throw error;
