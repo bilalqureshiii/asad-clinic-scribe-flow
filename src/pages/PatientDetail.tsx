@@ -1,21 +1,60 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useClinic } from '@/contexts/ClinicContext';
 import { TabsContent, Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, ArrowLeft, Calendar } from 'lucide-react';
+import { FileText, ArrowLeft, Calendar, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Patient, Prescription, Payment } from '@/types/patient';
 
 const PatientDetail: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const { getPatientById, getPrescriptionsByPatientId, getPaymentsByPatientId } = useClinic();
   const [activeTab, setActiveTab] = useState('details');
+  
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const patient = getPatientById(patientId || '');
-  const prescriptions = getPrescriptionsByPatientId(patientId || '');
-  const payments = getPaymentsByPatientId(patientId || '');
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        if (patientId) {
+          const patientData = await getPatientById(patientId);
+          setPatient(patientData);
+          
+          if (patientData) {
+            const [prescriptionsData, paymentsData] = await Promise.all([
+              getPrescriptionsByPatientId(patientId),
+              getPaymentsByPatientId(patientId)
+            ]);
+            
+            setPrescriptions(prescriptionsData);
+            setPayments(paymentsData);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching patient data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [patientId, getPatientById, getPrescriptionsByPatientId, getPaymentsByPatientId]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-clinic-teal" />
+        <p className="mt-4 text-gray-600">Loading patient data...</p>
+      </div>
+    );
+  }
 
   if (!patient) {
     return (

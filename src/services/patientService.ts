@@ -50,7 +50,7 @@ export const patientService = {
     // Fetch medical history for this patient
     const { data: medicalHistoryData, error: medicalHistoryError } = await supabase
       .from('medical_histories')
-      .select('*, prescriptions(id)')
+      .select('*')
       .eq('patient_id', id)
       .order('date', { ascending: false });
     
@@ -63,7 +63,7 @@ export const patientService = {
       date: history.date,
       diagnosis: history.diagnosis,
       notes: history.notes || '',
-      prescriptionId: history.prescriptions?.id
+      prescriptionId: history.prescription_id
     }));
     
     return {

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,6 +25,8 @@ import { useClinic } from '@/contexts/ClinicContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import DrawingCanvas from '@/components/prescriptions/DrawingCanvas';
+import { Patient } from '@/types/patient';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   notes: z.string().optional(),
@@ -43,8 +44,30 @@ const NewPrescription: React.FC = () => {
   const { toast } = useToast();
   const [prescriptionImage, setPrescriptionImage] = useState<string | null>(null);
   const [diagnosis, setDiagnosis] = useState('');
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const patient = getPatientById(patientId || '');
+  useEffect(() => {
+    const loadPatient = async () => {
+      if (patientId) {
+        try {
+          const patientData = await getPatientById(patientId);
+          setPatient(patientData);
+        } catch (error) {
+          console.error('Error loading patient:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load patient information',
+            variant: 'destructive',
+          });
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    loadPatient();
+  }, [patientId, getPatientById, toast]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -55,7 +78,7 @@ const NewPrescription: React.FC = () => {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     if (!prescriptionImage) {
       toast({
         title: 'Prescription Required',
@@ -76,7 +99,7 @@ const NewPrescription: React.FC = () => {
 
     try {
       // Create prescription
-      const newPrescription = addPrescription({
+      const newPrescription = await addPrescription({
         patientId: patient.id,
         doctorId: user.id,
         date: new Date().toISOString().split('T')[0],
@@ -90,7 +113,7 @@ const NewPrescription: React.FC = () => {
 
       // Add medical history
       if (diagnosis) {
-        addMedicalHistory(patient.id, {
+        await addMedicalHistory(patient.id, {
           date: new Date().toISOString().split('T')[0],
           diagnosis: diagnosis,
           notes: data.notes || '',
@@ -103,7 +126,7 @@ const NewPrescription: React.FC = () => {
         const paymentAmount = data.fee - (data.discount || 0);
         
         if (paymentAmount > 0) {
-          addPayment({
+          await addPayment({
             prescriptionId: newPrescription.id,
             patientId: patient.id,
             amount: paymentAmount,
@@ -130,6 +153,15 @@ const NewPrescription: React.FC = () => {
       console.error(error);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-clinic-teal" />
+        <p className="mt-4 text-gray-600">Loading patient data...</p>
+      </div>
+    );
+  }
 
   if (!patient) {
     return (

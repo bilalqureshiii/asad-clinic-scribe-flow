@@ -13,7 +13,7 @@ const LoginPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-clinic-navy mb-2">Al-Asad Clinic</h1>
           <p className="text-gray-600">Management System</p>
         </div>
-        <LoginForm onLogin={login} />
+        <LoginForm />
       </div>
     </div>
   );

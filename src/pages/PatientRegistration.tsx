@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -66,10 +65,10 @@ const PatientRegistration: React.FC = () => {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     try {
       // Ensure all required fields are present and convert optional fields as needed
-      const patientData: Omit<Patient, 'id' | 'mrNumber' | 'registrationDate'> = {
+      const patientData: Omit<Patient, 'id' | 'mrNumber' | 'registrationDate' | 'medicalHistory'> = {
         firstName: data.firstName,
         lastName: data.lastName,
         dateOfBirth: data.dateOfBirth,
@@ -79,7 +78,7 @@ const PatientRegistration: React.FC = () => {
         address: data.address || undefined,
       };
       
-      const newPatient = addPatient(patientData);
+      const newPatient = await addPatient(patientData);
       
       toast({
         title: 'Patient registered successfully',

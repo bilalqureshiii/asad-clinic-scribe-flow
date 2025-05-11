@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,11 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 
-interface LoginFormProps {
-  onLogin?: (role: string) => void; // Keep backward compatibility
-}
-
-const LoginForm: React.FC<LoginFormProps> = () => {
+const LoginForm: React.FC = () => {
   const [activeTab, setActiveTab] = useState("login");
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
