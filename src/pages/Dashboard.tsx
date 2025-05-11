@@ -1,10 +1,13 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users } from 'lucide-react';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarDays, Users } from 'lucide-react';
+import StatCard from '@/components/dashboard/StatCard';
+import FilteredPatientsCard from '@/components/dashboard/FilteredPatientsCard';
+import RecentListCard from '@/components/dashboard/RecentListCard';
+import PatientsList from '@/components/dashboard/PatientsList';
+import PrescriptionsList from '@/components/dashboard/PrescriptionsList';
 
 type TimeFilter = 'day' | 'week' | 'month' | 'year';
 
@@ -55,141 +58,58 @@ const Dashboard: React.FC = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Total Patient Count Box */}
-        <Card className="bg-white">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg">Total Patients</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between pt-4">
-              <p className="text-3xl font-bold text-purple-600">{patients.length}</p>
-              <Users className="h-6 w-6 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard 
+          title="Total Patients" 
+          value={patients.length}
+          icon={Users}
+          iconColor="text-purple-600"
+        />
         
         {/* Filtered Patients Box */}
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Filtered Patients</CardTitle>
-              <Select
-                value={timeFilter}
-                onValueChange={(value) => setTimeFilter(value as TimeFilter)}
-              >
-                <SelectTrigger className="w-[120px] h-8">
-                  <SelectValue placeholder="Filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="day">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                  <SelectItem value="year">This Year</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="flex items-center">
-              <p className="text-3xl font-bold text-clinic-teal">{filteredPatients.length}</p>
-              <CalendarDays className="ml-2 h-4 w-4 text-muted-foreground" />
-              <span className="ml-1 text-xs text-muted-foreground">
-                {timeFilter === 'day' ? 'Last 24hrs' :
-                 timeFilter === 'week' ? 'Last 7 days' :
-                 timeFilter === 'month' ? 'Last 30 days' : 'Last 365 days'}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+        <FilteredPatientsCard
+          timeFilter={timeFilter}
+          setTimeFilter={setTimeFilter}
+          filteredCount={filteredPatients.length}
+        />
         
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Today's Prescriptions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-clinic-navy">{todayPrescriptions.length}</p>
-          </CardContent>
-        </Card>
+        {/* Today's Prescriptions Box */}
+        <StatCard 
+          title="Today's Prescriptions" 
+          value={todayPrescriptions.length}
+          iconColor="text-clinic-navy"
+        />
         
+        {/* Conditional Cards based on user role */}
         {user?.role === 'doctor' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">My Prescriptions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-clinic-accent">{doctorPrescriptions.length}</p>
-            </CardContent>
-          </Card>
+          <StatCard 
+            title="My Prescriptions" 
+            value={doctorPrescriptions.length}
+            iconColor="text-clinic-accent"
+          />
         )}
         
         {(user?.role === 'admin' || user?.role === 'staff') && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Total Revenue</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-green-600">Rs. {totalRevenue}</p>
-            </CardContent>
-          </Card>
+          <StatCard 
+            title="Total Revenue" 
+            value={`Rs. ${totalRevenue}`}
+            iconColor="text-green-600"
+          />
         )}
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Patients</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {patients.slice(0, 5).map(patient => (
-                <div key={patient.id} className="border-b pb-2">
-                  <div className="flex justify-between">
-                    <div>
-                      <div className="font-medium">{patient.firstName} {patient.lastName}</div>
-                      <div className="text-sm text-gray-500">MR#: {patient.mrNumber}</div>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {new Date(patient.registrationDate).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {patients.length === 0 && (
-                <div className="text-center text-gray-500">No patients yet</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Recent Patients List */}
+        <RecentListCard title="Recent Patients">
+          <PatientsList patients={patients} />
+        </RecentListCard>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Prescriptions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {prescriptions.slice(0, 5).map(prescription => {
-                const patient = patients.find(p => p.id === prescription.patientId);
-                return (
-                  <div key={prescription.id} className="border-b pb-2">
-                    <div className="flex justify-between">
-                      <div>
-                        <div className="font-medium">{patient?.firstName} {patient?.lastName}</div>
-                        <div className="text-sm text-gray-500">
-                          Status: <span className="capitalize">{prescription.status}</span>
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {new Date(prescription.date).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              {prescriptions.length === 0 && (
-                <div className="text-center text-gray-500">No prescriptions yet</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Recent Prescriptions List */}
+        <RecentListCard title="Recent Prescriptions">
+          <PrescriptionsList 
+            prescriptions={prescriptions}
+            patients={patients}
+          />
+        </RecentListCard>
       </div>
     </div>
   );
