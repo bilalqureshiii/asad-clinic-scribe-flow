@@ -120,14 +120,16 @@ const Prescriptions: React.FC = () => {
                       )}
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className={cn(
-                        "text-xs px-2 py-1 rounded-full",
-                        prescription.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        prescription.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-blue-100 text-blue-800'
-                      )}>
-                        {prescription.status}
-                      </span>
+                      {/* Removed status display for "pending" as requested */}
+                      {prescription.status !== 'pending' && (
+                        <span className={cn(
+                          "text-xs px-2 py-1 rounded-full",
+                          prescription.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          'bg-blue-100 text-blue-800'
+                        )}>
+                          {prescription.status}
+                        </span>
+                      )}
                       {prescription.paymentStatus && (
                         <span className={cn(
                           "text-xs px-2 py-1 rounded-full mt-2",

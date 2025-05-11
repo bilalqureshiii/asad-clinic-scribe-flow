@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Prescription, Payment } from '@/types/patient';
 
@@ -119,6 +118,18 @@ export const prescriptionService = {
       discount: data.discount,
       paymentStatus: data.payment_status as 'pending' | 'paid' | 'waived' | undefined
     };
+  },
+  
+  async deletePrescription(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('prescriptions')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting prescription:', error);
+      throw new Error(error.message);
+    }
   },
   
   async addPayment(payment: Omit<Payment, 'id'>): Promise<Payment> {

@@ -15,6 +15,7 @@ interface ClinicContextType {
   getPatientByMrNumber: (mrNumber: string) => Promise<Patient | null>;
   addPrescription: (prescription: Omit<Prescription, 'id'>) => Promise<Prescription>;
   getPrescriptionsByPatientId: (patientId: string) => Promise<Prescription[]>;
+  deletePrescription: (id: string) => Promise<void>;
   addPayment: (payment: Omit<Payment, 'id'>) => Promise<Payment>;
   getPaymentsByPatientId: (patientId: string) => Promise<Payment[]>;
   addMedicalHistory: (patientId: string, history: Omit<MedicalHistory, 'id'>) => Promise<MedicalHistory>;
@@ -151,6 +152,20 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  const deletePrescription = async (id: string): Promise<void> => {
+    try {
+      await prescriptionService.deletePrescription(id);
+      
+      // Update local state by removing the deleted prescription
+      setPrescriptions(prevPrescriptions => 
+        prevPrescriptions.filter(prescription => prescription.id !== id)
+      );
+    } catch (error) {
+      console.error("Error deleting prescription:", error);
+      throw error;
+    }
+  };
+
   const addPayment = async (paymentData: Omit<Payment, 'id'>): Promise<Payment> => {
     try {
       const newPayment = await prescriptionService.addPayment(paymentData);
@@ -228,6 +243,7 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       getPatientByMrNumber,
       addPrescription,
       getPrescriptionsByPatientId,
+      deletePrescription,
       addPayment,
       getPaymentsByPatientId,
       addMedicalHistory,

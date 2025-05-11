@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useClinic } from '@/contexts/ClinicContext';
@@ -8,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, ArrowLeft, Calendar, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Patient, Prescription, Payment } from '@/types/patient';
+import PrescriptionsList from '@/components/dashboard/PrescriptionsList';
 
 const PatientDetail: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
@@ -188,46 +188,11 @@ const PatientDetail: React.FC = () => {
             </CardHeader>
             <CardContent>
               {prescriptions.length > 0 ? (
-                <div className="space-y-4">
-                  {prescriptions.map((prescription) => (
-                    <Link 
-                      to={`/prescriptions/${prescription.id}`} 
-                      key={prescription.id} 
-                      className="block"
-                    >
-                      <div className="border rounded-lg p-4 hover:border-clinic-teal transition-colors">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="flex items-center">
-                              <Calendar className="h-4 w-4 text-clinic-gray mr-2" />
-                              <span className="text-sm text-gray-500">
-                                {new Date(prescription.date).toLocaleDateString()}
-                              </span>
-                            </div>
-                            {prescription.notes && (
-                              <p className="mt-1">{prescription.notes}</p>
-                            )}
-                          </div>
-                          <div className="flex flex-col items-end">
-                            <span className={cn(
-                              "text-xs px-2 py-1 rounded-full",
-                              prescription.status === 'completed' ? 'bg-green-100 text-green-800' :
-                              prescription.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-blue-100 text-blue-800'
-                            )}>
-                              {prescription.status}
-                            </span>
-                            {prescription.fee && (
-                              <span className="mt-2 text-sm">
-                                Fee: Rs. {prescription.fee}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                <PrescriptionsList 
+                  prescriptions={prescriptions} 
+                  patients={[patient]} 
+                  showDelete={true}
+                />
               ) : (
                 <p className="text-center py-10 text-gray-500">No prescriptions yet</p>
               )}
