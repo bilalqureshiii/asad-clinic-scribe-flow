@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Shield } from 'lucide-react';
 import UserRoleManagement from '@/components/settings/UserRoleManagement';
 import SystemConfig from '@/components/settings/SystemConfig';
+import OrganizationBranding from '@/components/settings/OrganizationBranding';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -40,6 +41,7 @@ const Settings: React.FC = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="roles">User Roles</TabsTrigger>
           <TabsTrigger value="system">System Configuration</TabsTrigger>
+          <TabsTrigger value="branding">Branding</TabsTrigger>
         </TabsList>
         
         <TabsContent value="roles">
@@ -48,6 +50,10 @@ const Settings: React.FC = () => {
         
         <TabsContent value="system">
           <SystemConfig />
+        </TabsContent>
+        
+        <TabsContent value="branding">
+          <OrganizationBranding />
         </TabsContent>
       </Tabs>
     </div>
