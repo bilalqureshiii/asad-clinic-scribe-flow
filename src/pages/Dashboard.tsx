@@ -1,12 +1,44 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useClinic } from '@/contexts/ClinicContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { CalendarDays } from 'lucide-react';
+
+type TimeFilter = 'day' | 'week' | 'month' | 'year';
 
 const Dashboard: React.FC = () => {
   const { patients, prescriptions, payments } = useClinic();
   const { user } = useAuth();
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('month');
+
+  // Filter patients based on the selected time filter
+  const filteredPatients = React.useMemo(() => {
+    const now = new Date();
+    const filterDate = new Date();
+    
+    switch (timeFilter) {
+      case 'day':
+        filterDate.setDate(now.getDate() - 1);
+        break;
+      case 'week':
+        filterDate.setDate(now.getDate() - 7);
+        break;
+      case 'month':
+        filterDate.setMonth(now.getMonth() - 1);
+        break;
+      case 'year':
+        filterDate.setFullYear(now.getFullYear() - 1);
+        break;
+    }
+    
+    return patients.filter(patient => 
+      new Date(patient.registrationDate) >= filterDate
+    );
+  }, [patients, timeFilter]);
 
   const todayPrescriptions = prescriptions.filter(prescription => {
     const today = new Date().toISOString().split('T')[0];
@@ -19,17 +51,76 @@ const Dashboard: React.FC = () => {
 
   const totalRevenue = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
 
+  // Prepare chart data for monthly statistics
+  const chartData = React.useMemo(() => {
+    const monthlyStats = new Array(6).fill(0).map((_, index) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - index);
+      const monthName = date.toLocaleString('default', { month: 'short' });
+      const year = date.getFullYear();
+      const monthKey = `${year}-${date.getMonth() + 1}`;
+      
+      const monthPatients = patients.filter(patient => {
+        const patientDate = new Date(patient.registrationDate);
+        return (
+          patientDate.getMonth() === date.getMonth() && 
+          patientDate.getFullYear() === date.getFullYear()
+        );
+      }).length;
+      
+      const monthPrescriptions = prescriptions.filter(prescription => {
+        const prescriptionDate = new Date(prescription.date);
+        return (
+          prescriptionDate.getMonth() === date.getMonth() && 
+          prescriptionDate.getFullYear() === date.getFullYear()
+        );
+      }).length;
+      
+      return {
+        name: monthName,
+        patients: monthPatients,
+        prescriptions: monthPrescriptions,
+      };
+    }).reverse();
+    
+    return monthlyStats;
+  }, [patients, prescriptions]);
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-clinic-navy mb-6">Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Total Patients</CardTitle>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Total Patients</CardTitle>
+              <Select
+                value={timeFilter}
+                onValueChange={(value) => setTimeFilter(value as TimeFilter)}
+              >
+                <SelectTrigger className="w-[120px] h-8">
+                  <SelectValue placeholder="Filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="day">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="year">This Year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-clinic-teal">{patients.length}</p>
+          <CardContent className="pt-2">
+            <div className="flex items-center">
+              <p className="text-3xl font-bold text-clinic-teal">{filteredPatients.length}</p>
+              <CalendarDays className="ml-2 h-4 w-4 text-muted-foreground" />
+              <span className="ml-1 text-xs text-muted-foreground">
+                {timeFilter === 'day' ? 'Last 24hrs' :
+                 timeFilter === 'week' ? 'Last 7 days' :
+                 timeFilter === 'month' ? 'Last 30 days' : 'Last 365 days'}
+              </span>
+            </div>
           </CardContent>
         </Card>
         
@@ -64,6 +155,52 @@ const Dashboard: React.FC = () => {
           </Card>
         )}
       </div>
+      
+      {/* Statistics Chart */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Monthly Statistics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer
+            className="aspect-[4/3] sm:aspect-[16/9]"
+            config={{
+              patients: { color: "#14b8a6" }, // clinic-teal
+              prescriptions: { color: "#1e40af" } // clinic-navy
+            }}
+          >
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={chartData}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <ChartTooltipContent>
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-2 rounded-full bg-[#14b8a6]" />
+                              <span>Patients: {payload[0].value}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-2 rounded-full bg-[#1e40af]" />
+                              <span>Prescriptions: {payload[1].value}</span>
+                            </div>
+                          </div>
+                        </ChartTooltipContent>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="patients" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="prescriptions" fill="#1e40af" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
