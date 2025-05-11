@@ -120,13 +120,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signup = async (email: string, password: string, name: string, role: string = 'staff') => {
     try {
+      // Validate that role is one of the allowed values
+      const validRole = ['doctor', 'staff', 'admin'].includes(role) ? role : 'staff';
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name,
-            role,
+            role: validRole,
           },
         },
       });
