@@ -28,6 +28,10 @@ import DrawingCanvas from '@/components/prescriptions/DrawingCanvas';
 import { Patient } from '@/types/patient';
 import { Loader2 } from 'lucide-react';
 
+// Storage keys for header and footer settings
+const HEADER_STORAGE_KEY = 'al_asad_prescription_header';
+const FOOTER_STORAGE_KEY = 'al_asad_prescription_footer';
+
 const formSchema = z.object({
   notes: z.string().optional(),
   fee: z.number().min(0).optional(),
@@ -46,6 +50,8 @@ const NewPrescription: React.FC = () => {
   const [diagnosis, setDiagnosis] = useState('');
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
+  const [headerSettings, setHeaderSettings] = useState<any>(null);
+  const [footerSettings, setFooterSettings] = useState<any>(null);
 
   useEffect(() => {
     const loadPatient = async () => {
@@ -67,6 +73,18 @@ const NewPrescription: React.FC = () => {
     };
     
     loadPatient();
+    
+    // Load header and footer settings
+    const savedHeader = localStorage.getItem(HEADER_STORAGE_KEY);
+    const savedFooter = localStorage.getItem(FOOTER_STORAGE_KEY);
+    
+    if (savedHeader) {
+      setHeaderSettings(JSON.parse(savedHeader));
+    }
+    
+    if (savedFooter) {
+      setFooterSettings(JSON.parse(savedFooter));
+    }
   }, [patientId, getPatientById, toast]);
 
   const form = useForm<FormValues>({
@@ -212,6 +230,37 @@ const NewPrescription: React.FC = () => {
               <CardTitle>Write Prescription</CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Show header preview */}
+              {headerSettings && (
+                <div 
+                  className="mb-4 pb-2 border-b"
+                  style={{
+                    fontWeight: headerSettings.fontStyle?.includes('bold') ? 'bold' : 'normal',
+                    fontStyle: headerSettings.fontStyle?.includes('italic') ? 'italic' : 'normal',
+                    fontSize: headerSettings.fontSize === 'small' ? '14px' : headerSettings.fontSize === 'medium' ? '16px' : '18px',
+                    textAlign: headerSettings.alignment || 'center',
+                  }}
+                >
+                  <div className="flex items-center gap-3" style={{
+                    justifyContent: headerSettings.alignment === 'center' ? 'center' : 
+                                   headerSettings.alignment === 'right' ? 'flex-end' : 'flex-start'
+                  }}>
+                    {headerSettings.logo && (
+                      <img 
+                        src={headerSettings.logo} 
+                        alt="Header Logo" 
+                        className="max-h-10 object-contain" 
+                      />
+                    )}
+                    <div>
+                      <div className="font-medium">{headerSettings.text}</div>
+                      <div className="text-xs">{headerSettings.address}</div>
+                      <div className="text-xs">{headerSettings.contact}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               {!prescriptionImage ? (
                 <DrawingCanvas onSave={setPrescriptionImage} />
               ) : (
@@ -229,6 +278,22 @@ const NewPrescription: React.FC = () => {
                   >
                     Redraw Prescription
                   </Button>
+                </div>
+              )}
+              
+              {/* Show footer preview */}
+              {footerSettings && prescriptionImage && (
+                <div 
+                  className="mt-4 pt-2 border-t"
+                  style={{
+                    fontWeight: footerSettings.fontStyle?.includes('bold') ? 'bold' : 'normal',
+                    fontStyle: footerSettings.fontStyle?.includes('italic') ? 'italic' : 'normal',
+                    fontSize: footerSettings.fontSize === 'small' ? '12px' : footerSettings.fontSize === 'medium' ? '14px' : '16px',
+                    textAlign: footerSettings.alignment || 'center',
+                  }}
+                >
+                  <div>{footerSettings.text}</div>
+                  <div className="text-xs mt-1">{footerSettings.additionalInfo}</div>
                 </div>
               )}
             </CardContent>

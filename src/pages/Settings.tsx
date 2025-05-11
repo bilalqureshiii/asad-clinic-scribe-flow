@@ -7,6 +7,7 @@ import { Shield } from 'lucide-react';
 import UserRoleManagement from '@/components/settings/UserRoleManagement';
 import SystemConfig from '@/components/settings/SystemConfig';
 import OrganizationBranding from '@/components/settings/OrganizationBranding';
+import PrescriptionTemplate from '@/components/settings/PrescriptionTemplate';
 
 const Settings: React.FC = () => {
   const { profile } = useAuth();
@@ -39,6 +40,7 @@ const Settings: React.FC = () => {
           <TabsTrigger value="roles">User Roles</TabsTrigger>
           <TabsTrigger value="system">System Configuration</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
+          <TabsTrigger value="prescription">Prescription Template</TabsTrigger>
         </TabsList>
         
         <TabsContent value="roles">
@@ -51,6 +53,10 @@ const Settings: React.FC = () => {
         
         <TabsContent value="branding">
           <OrganizationBranding />
+        </TabsContent>
+        
+        <TabsContent value="prescription">
+          <PrescriptionTemplate />
         </TabsContent>
       </Tabs>
     </div>

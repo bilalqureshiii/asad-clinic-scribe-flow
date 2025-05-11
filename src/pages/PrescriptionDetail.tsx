@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +30,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+// Storage keys for header and footer settings
+const HEADER_STORAGE_KEY = 'al_asad_prescription_header';
+const FOOTER_STORAGE_KEY = 'al_asad_prescription_footer';
+
 const PrescriptionDetail: React.FC = () => {
   const { prescriptionId } = useParams<{ prescriptionId: string }>();
   const navigate = useNavigate();
@@ -45,6 +49,24 @@ const PrescriptionDetail: React.FC = () => {
   const [amount, setAmount] = useState(prescription?.fee || 0);
   const [discount, setDiscount] = useState(prescription?.discount || 0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  
+  // Get header and footer settings
+  const [headerSettings, setHeaderSettings] = useState<any>(null);
+  const [footerSettings, setFooterSettings] = useState<any>(null);
+  
+  // Load header and footer settings
+  useEffect(() => {
+    const savedHeader = localStorage.getItem(HEADER_STORAGE_KEY);
+    const savedFooter = localStorage.getItem(FOOTER_STORAGE_KEY);
+    
+    if (savedHeader) {
+      setHeaderSettings(JSON.parse(savedHeader));
+    }
+    
+    if (savedFooter) {
+      setFooterSettings(JSON.parse(savedFooter));
+    }
+  }, []);
 
   if (!prescription || !patient) {
     return (
@@ -65,27 +87,66 @@ const PrescriptionDetail: React.FC = () => {
     const printWindow = window.open('', '', 'width=800,height=600');
     if (!printWindow) return;
 
+    // Prepare header styling based on saved settings
+    const headerStyles = headerSettings ? `
+      font-weight: ${headerSettings.fontStyle?.includes('bold') ? 'bold' : 'normal'};
+      font-style: ${headerSettings.fontStyle?.includes('italic') ? 'italic' : 'normal'};
+      font-size: ${headerSettings.fontSize === 'small' ? '14px' : headerSettings.fontSize === 'medium' ? '18px' : '22px'};
+      text-align: ${headerSettings.alignment || 'center'};
+    ` : '';
+    
+    // Prepare footer styling based on saved settings
+    const footerStyles = footerSettings ? `
+      font-weight: ${footerSettings.fontStyle?.includes('bold') ? 'bold' : 'normal'};
+      font-style: ${footerSettings.fontStyle?.includes('italic') ? 'italic' : 'normal'};
+      font-size: ${footerSettings.fontSize === 'small' ? '12px' : footerSettings.fontSize === 'medium' ? '14px' : '16px'};
+      text-align: ${footerSettings.alignment || 'center'};
+    ` : '';
+
+    // Generate header HTML
+    const headerHTML = headerSettings ? `
+      <div class="header-content" style="${headerStyles}">
+        <div class="header-main" style="display: flex; align-items: center; gap: 15px; justify-content: ${headerSettings.alignment === 'center' ? 'center' : 'flex-start'}">
+          ${headerSettings.logo ? `<img src="${headerSettings.logo}" style="max-height: 50px;" />` : ''}
+          <div>
+            <div style="font-weight: bold;">${headerSettings.text || ''}</div>
+            <div style="font-size: 0.9em;">${headerSettings.address || ''}</div>
+            <div style="font-size: 0.9em;">${headerSettings.contact || ''}</div>
+          </div>
+        </div>
+      </div>
+    ` : `
+      <div class="clinic-name">Al-Asad Clinic</div>
+    `;
+    
+    // Generate footer HTML
+    const footerHTML = footerSettings ? `
+      <div class="footer-content" style="${footerStyles}">
+        <div>${footerSettings.text || ''}</div>
+        <div style="margin-top: 5px;">${footerSettings.additionalInfo || ''}</div>
+      </div>
+    ` : `
+      <div>Doctor's Signature</div>
+    `;
+
     printWindow.document.write(`
       <html>
         <head>
           <title>Prescription - ${patient.mrNumber}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
-            .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-            .clinic-name { font-size: 24px; font-weight: bold; }
+            .header { margin-bottom: 20px; }
             .patient-info { margin-bottom: 20px; }
             .label { font-weight: bold; }
             .prescription-image { max-width: 100%; border: 1px solid #ddd; margin: 20px 0; }
-            .footer { margin-top: 30px; text-align: right; }
+            .footer { margin-top: 30px; }
+            .header-content { padding-bottom: 15px; border-bottom: 1px solid #ddd; }
+            .footer-content { padding-top: 15px; border-top: 1px solid #ddd; }
           </style>
         </head>
         <body>
           <div class="header">
-            <div class="clinic-name">Al-Asad Clinic</div>
-            <div>
-              <div>Date: ${new Date(prescription.date).toLocaleDateString()}</div>
-              <div>Prescription #: ${prescription.id}</div>
-            </div>
+            ${headerHTML}
           </div>
           
           <div class="patient-info">
@@ -93,6 +154,7 @@ const PrescriptionDetail: React.FC = () => {
             <div><span class="label">MR#:</span> ${patient.mrNumber}</div>
             <div><span class="label">Gender:</span> ${patient.gender}</div>
             <div><span class="label">DOB:</span> ${new Date(patient.dateOfBirth).toLocaleDateString()}</div>
+            <div><span class="label">Date:</span> ${new Date(prescription.date).toLocaleDateString()}</div>
           </div>
           
           <img src="${prescription.imageUrl}" class="prescription-image" />
@@ -100,7 +162,7 @@ const PrescriptionDetail: React.FC = () => {
           ${prescription.notes ? `<div><span class="label">Notes:</span> ${prescription.notes}</div>` : ''}
           
           <div class="footer">
-            <div>Doctor's Signature</div>
+            ${footerHTML}
           </div>
         </body>
       </html>
@@ -210,11 +272,59 @@ const PrescriptionDetail: React.FC = () => {
               <CardTitle>Prescription</CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Preview with custom header */}
+              {headerSettings && (
+                <div 
+                  className="mb-4 pb-2 border-b"
+                  style={{
+                    fontWeight: headerSettings.fontStyle?.includes('bold') ? 'bold' : 'normal',
+                    fontStyle: headerSettings.fontStyle?.includes('italic') ? 'italic' : 'normal',
+                    fontSize: headerSettings.fontSize === 'small' ? '14px' : headerSettings.fontSize === 'medium' ? '16px' : '18px',
+                    textAlign: headerSettings.alignment || 'center',
+                  }}
+                >
+                  <div className="flex items-center gap-3" style={{
+                    justifyContent: headerSettings.alignment === 'center' ? 'center' : 
+                                   headerSettings.alignment === 'right' ? 'flex-end' : 'flex-start'
+                  }}>
+                    {headerSettings.logo && (
+                      <img 
+                        src={headerSettings.logo} 
+                        alt="Header Logo" 
+                        className="max-h-10 object-contain" 
+                      />
+                    )}
+                    <div>
+                      <div className="font-medium">{headerSettings.text}</div>
+                      <div className="text-xs">{headerSettings.address}</div>
+                      <div className="text-xs">{headerSettings.contact}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <img 
                 src={prescription.imageUrl} 
                 alt="Prescription" 
                 className="max-w-full border rounded-md" 
               />
+              
+              {/* Preview with custom footer */}
+              {footerSettings && (
+                <div 
+                  className="mt-4 pt-2 border-t"
+                  style={{
+                    fontWeight: footerSettings.fontStyle?.includes('bold') ? 'bold' : 'normal',
+                    fontStyle: footerSettings.fontStyle?.includes('italic') ? 'italic' : 'normal',
+                    fontSize: footerSettings.fontSize === 'small' ? '12px' : footerSettings.fontSize === 'medium' ? '14px' : '16px',
+                    textAlign: footerSettings.alignment || 'center',
+                  }}
+                >
+                  <div>{footerSettings.text}</div>
+                  <div className="text-xs mt-1">{footerSettings.additionalInfo}</div>
+                </div>
+              )}
+              
               {prescription.notes && (
                 <div className="mt-4">
                   <h4 className="font-semibold mb-1">Notes:</h4>
