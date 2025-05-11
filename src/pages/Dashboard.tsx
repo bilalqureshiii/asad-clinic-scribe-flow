@@ -4,9 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useClinic } from '@/contexts/ClinicContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Users } from 'lucide-react';
 
 type TimeFilter = 'day' | 'week' | 'month' | 'year';
 
@@ -51,50 +49,29 @@ const Dashboard: React.FC = () => {
 
   const totalRevenue = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
 
-  // Prepare chart data for monthly statistics
-  const chartData = React.useMemo(() => {
-    const monthlyStats = new Array(6).fill(0).map((_, index) => {
-      const date = new Date();
-      date.setMonth(date.getMonth() - index);
-      const monthName = date.toLocaleString('default', { month: 'short' });
-      const year = date.getFullYear();
-      const monthKey = `${year}-${date.getMonth() + 1}`;
-      
-      const monthPatients = patients.filter(patient => {
-        const patientDate = new Date(patient.registrationDate);
-        return (
-          patientDate.getMonth() === date.getMonth() && 
-          patientDate.getFullYear() === date.getFullYear()
-        );
-      }).length;
-      
-      const monthPrescriptions = prescriptions.filter(prescription => {
-        const prescriptionDate = new Date(prescription.date);
-        return (
-          prescriptionDate.getMonth() === date.getMonth() && 
-          prescriptionDate.getFullYear() === date.getFullYear()
-        );
-      }).length;
-      
-      return {
-        name: monthName,
-        patients: monthPatients,
-        prescriptions: monthPrescriptions,
-      };
-    }).reverse();
-    
-    return monthlyStats;
-  }, [patients, prescriptions]);
-
   return (
     <div>
       <h1 className="text-3xl font-bold text-clinic-navy mb-6">Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Total Patient Count Box */}
+        <Card className="bg-white">
+          <CardHeader className="pb-0">
+            <CardTitle className="text-lg">Total Patients</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between pt-4">
+              <p className="text-3xl font-bold text-purple-600">{patients.length}</p>
+              <Users className="h-6 w-6 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Filtered Patients Box */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Total Patients</CardTitle>
+              <CardTitle className="text-lg">Filtered Patients</CardTitle>
               <Select
                 value={timeFilter}
                 onValueChange={(value) => setTimeFilter(value as TimeFilter)}
@@ -155,52 +132,6 @@ const Dashboard: React.FC = () => {
           </Card>
         )}
       </div>
-      
-      {/* Statistics Chart */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Monthly Statistics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            className="aspect-[4/3] sm:aspect-[16/9]"
-            config={{
-              patients: { color: "#14b8a6" }, // clinic-teal
-              prescriptions: { color: "#1e40af" } // clinic-navy
-            }}
-          >
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={chartData}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <ChartTooltipContent>
-                          <div className="grid gap-2">
-                            <div className="flex items-center gap-2">
-                              <div className="h-2 w-2 rounded-full bg-[#14b8a6]" />
-                              <span>Patients: {payload[0].value}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="h-2 w-2 rounded-full bg-[#1e40af]" />
-                              <span>Prescriptions: {payload[1].value}</span>
-                            </div>
-                          </div>
-                        </ChartTooltipContent>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="patients" fill="#14b8a6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="prescriptions" fill="#1e40af" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
