@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { User, FileText, UserPlus, Calendar, Settings, LogOut } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 // Logo storage key constant from OrganizationBranding
 const LOGO_STORAGE_KEY = 'al_asad_clinic_logo';
@@ -51,13 +52,14 @@ const Sidebar: React.FC = () => {
       <div className="py-4 mb-10">
         {logo ? (
           <div className="flex justify-center mb-3">
-            <div className="h-16 w-auto max-w-full overflow-hidden">
-              <img 
+            <Avatar className="h-16 w-16">
+              <AvatarImage 
                 src={logo} 
                 alt="Organization Logo" 
-                className="h-full max-h-16 w-auto object-contain"
+                className="object-cover"
               />
-            </div>
+              <AvatarFallback>Logo</AvatarFallback>
+            </Avatar>
           </div>
         ) : (
           <h1 className="text-xl font-bold text-center mb-3">Al-Asad Clinic</h1>

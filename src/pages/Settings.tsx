@@ -2,14 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Shield } from 'lucide-react';
 import UserRoleManagement from '@/components/settings/UserRoleManagement';
 import SystemConfig from '@/components/settings/SystemConfig';
 import OrganizationBranding from '@/components/settings/OrganizationBranding';
-import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 const Settings: React.FC = () => {
   const { profile } = useAuth();
