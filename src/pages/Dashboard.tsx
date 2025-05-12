@@ -41,10 +41,21 @@ const Dashboard: React.FC = () => {
     );
   }, [patients, timeFilter]);
 
-  const todayPrescriptions = prescriptions.filter(prescription => {
-    const today = new Date().toISOString().split('T')[0];
-    return prescription.date === today;
-  });
+  // Fix the date comparison logic to correctly identify today's prescriptions
+  const todayPrescriptions = React.useMemo(() => {
+    // Get today's date in YYYY-MM-DD format for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return prescriptions.filter(prescription => {
+      // Convert prescription date to Date object and reset time for fair comparison
+      const prescriptionDate = new Date(prescription.date);
+      prescriptionDate.setHours(0, 0, 0, 0);
+      
+      // Compare dates without time
+      return prescriptionDate.getTime() === today.getTime();
+    });
+  }, [prescriptions]);
 
   const doctorPrescriptions = prescriptions.filter(
     prescription => prescription.doctorId === user?.id
