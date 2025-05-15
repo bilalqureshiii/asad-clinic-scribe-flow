@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users } from 'lucide-react';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useAuth } from '@/contexts/auth';
@@ -15,12 +15,14 @@ const Dashboard: React.FC = () => {
   const {
     patients,
     prescriptions,
-    payments
+    payments,
+    refreshData
   } = useClinic();
   const {
     user
   } = useAuth();
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('month');
+  const [lastRefreshDate, setLastRefreshDate] = useState<string>(new Date().toDateString());
 
   // Filter patients based on the selected time filter
   const filteredPatients = React.useMemo(() => {
@@ -43,24 +45,48 @@ const Dashboard: React.FC = () => {
     return patients.filter(patient => new Date(patient.registrationDate) >= filterDate);
   }, [patients, timeFilter]);
 
-  // Improved date comparison logic to correctly identify today's prescriptions
+  // Automatic refresh when date changes - useful for overnight sessions
+  useEffect(() => {
+    const checkDateAndRefresh = () => {
+      const currentDate = new Date().toDateString();
+      if (currentDate !== lastRefreshDate) {
+        console.log('Date changed, refreshing data...');
+        refreshData();
+        setLastRefreshDate(currentDate);
+      }
+    };
+
+    // Check immediately on mount
+    checkDateAndRefresh();
+    
+    // Then set up periodic checks (every minute)
+    const intervalId = setInterval(checkDateAndRefresh, 60000);
+    return () => clearInterval(intervalId);
+  }, [refreshData, lastRefreshDate]);
+
+  // Enhanced date comparison logic with better debugging
   const todayPrescriptions = React.useMemo(() => {
     const today = new Date();
-    // Reset hours to start of day for comparison
     today.setHours(0, 0, 0, 0);
     
+    console.log('Today reference (midnight):', today.toISOString());
+    
     return prescriptions.filter(prescription => {
-      // Convert prescription date string to Date object
+      // Parse the prescription date string with explicit handling
       const prescriptionDate = new Date(prescription.date);
-      // Reset time to start of the day
       prescriptionDate.setHours(0, 0, 0, 0);
       
       // Compare only the date part (year, month, day)
-      return (
+      const isToday = 
         prescriptionDate.getFullYear() === today.getFullYear() &&
         prescriptionDate.getMonth() === today.getMonth() &&
-        prescriptionDate.getDate() === today.getDate()
-      );
+        prescriptionDate.getDate() === today.getDate();
+        
+      if (isToday) {
+        console.log('Found today prescription:', prescription.id, prescriptionDate.toISOString());
+      }
+      
+      return isToday;
     });
   }, [prescriptions]);
 
@@ -78,7 +104,11 @@ const Dashboard: React.FC = () => {
         <FilteredPatientsCard timeFilter={timeFilter} setTimeFilter={setTimeFilter} filteredCount={filteredPatients.length} />
         
         {/* Today's Prescriptions Box */}
-        <StatCard title="Today's Prescriptions" value={todayPrescriptions.length} iconColor="text-clinic-navy" />
+        <StatCard 
+          title="Today's Prescriptions" 
+          value={todayPrescriptions.length} 
+          iconColor="text-clinic-navy" 
+        />
         
         {/* Conditional Cards based on user role */}
         {user?.role === 'doctor' && <StatCard title="My Prescriptions" value={doctorPrescriptions.length} iconColor="text-clinic-accent" />}
