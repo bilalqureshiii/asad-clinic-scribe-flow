@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useClinic } from '@/contexts/ClinicContext';
@@ -29,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { usePrescriptionTemplate } from '@/hooks/usePrescriptionTemplate';
 
 // Storage keys for header and footer settings
 const HEADER_STORAGE_KEY = 'al_asad_prescription_header';
@@ -40,6 +40,7 @@ const PrescriptionDetail: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { prescriptions, patients, payments, addPayment } = useClinic();
+  const { headerSettings, footerSettings } = usePrescriptionTemplate();
   
   const prescription = prescriptions.find(p => p.id === prescriptionId);
   const patient = prescription ? patients.find(p => p.id === prescription.patientId) : null;
@@ -49,24 +50,6 @@ const PrescriptionDetail: React.FC = () => {
   const [amount, setAmount] = useState(prescription?.fee || 0);
   const [discount, setDiscount] = useState(prescription?.discount || 0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
-  
-  // Get header and footer settings
-  const [headerSettings, setHeaderSettings] = useState<any>(null);
-  const [footerSettings, setFooterSettings] = useState<any>(null);
-  
-  // Load header and footer settings
-  useEffect(() => {
-    const savedHeader = localStorage.getItem(HEADER_STORAGE_KEY);
-    const savedFooter = localStorage.getItem(FOOTER_STORAGE_KEY);
-    
-    if (savedHeader) {
-      setHeaderSettings(JSON.parse(savedHeader));
-    }
-    
-    if (savedFooter) {
-      setFooterSettings(JSON.parse(savedFooter));
-    }
-  }, []);
 
   if (!prescription || !patient) {
     return (
@@ -178,6 +161,222 @@ const PrescriptionDetail: React.FC = () => {
     }, 500);
   };
 
+  // New function to create a combined image with header, prescription image, and footer
+  const createCombinedPrescriptionImage = async (): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!prescription) {
+        reject('Prescription not found');
+        return;
+      }
+
+      // Create a temporary canvas
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject('Failed to get canvas context');
+        return;
+      }
+
+      // Load the prescription image first to determine dimensions
+      const prescriptionImg = new Image();
+      prescriptionImg.crossOrigin = 'anonymous';
+      prescriptionImg.onload = () => {
+        // Set canvas size based on prescription image
+        const width = prescriptionImg.width;
+        // Add extra space for header and footer
+        const headerHeight = headerSettings ? 120 : 60;
+        const footerHeight = footerSettings ? 80 : 40;
+        const totalHeight = prescriptionImg.height + headerHeight + footerHeight;
+        
+        canvas.width = width;
+        canvas.height = totalHeight;
+        
+        // Fill with white background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, totalHeight);
+        
+        // Add header
+        ctx.save();
+        if (headerSettings) {
+          // Set font styles based on header settings
+          ctx.font = `${headerSettings.fontStyle?.includes('bold') ? 'bold' : 'normal'} ${headerSettings.fontSize === 'small' ? '14px' : headerSettings.fontSize === 'medium' ? '16px' : '18px'} Arial, sans-serif`;
+          ctx.textAlign = (headerSettings.alignment || 'center') as CanvasTextAlign;
+          
+          // Draw header text
+          const yPos = 30;
+          
+          if (headerSettings.text) {
+            ctx.fillStyle = '#000000';
+            ctx.fillText(headerSettings.text, headerSettings.alignment === 'center' ? width / 2 : headerSettings.alignment === 'right' ? width - 20 : 20, yPos);
+          }
+          
+          if (headerSettings.address) {
+            ctx.font = `12px Arial, sans-serif`;
+            ctx.fillText(headerSettings.address, headerSettings.alignment === 'center' ? width / 2 : headerSettings.alignment === 'right' ? width - 20 : 20, yPos + 20);
+          }
+          
+          if (headerSettings.contact) {
+            ctx.font = `12px Arial, sans-serif`;
+            ctx.fillText(headerSettings.contact, headerSettings.alignment === 'center' ? width / 2 : headerSettings.alignment === 'right' ? width - 20 : 20, yPos + 40);
+          }
+          
+          // If logo exists, draw it
+          if (headerSettings.logo) {
+            const logoImg = new Image();
+            logoImg.crossOrigin = 'anonymous';
+            logoImg.onload = () => {
+              const logoHeight = 40;
+              const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
+              let logoX = 20;
+              
+              if (headerSettings.alignment === 'center') {
+                logoX = (width / 2) - 100;
+              } else if (headerSettings.alignment === 'right') {
+                logoX = width - 140;
+              }
+              
+              ctx.drawImage(logoImg, logoX, 15, logoWidth, logoHeight);
+              
+              // Draw horizontal line to separate header
+              ctx.beginPath();
+              ctx.moveTo(20, headerHeight - 10);
+              ctx.lineTo(width - 20, headerHeight - 10);
+              ctx.strokeStyle = '#CCCCCC';
+              ctx.stroke();
+              
+              // Continue with the rest of the document
+              drawPrescriptionAndFooter();
+            };
+            logoImg.onerror = () => {
+              console.error('Failed to load logo');
+              // Draw horizontal line anyway
+              ctx.beginPath();
+              ctx.moveTo(20, headerHeight - 10);
+              ctx.lineTo(width - 20, headerHeight - 10);
+              ctx.strokeStyle = '#CCCCCC';
+              ctx.stroke();
+              
+              drawPrescriptionAndFooter();
+            };
+            logoImg.src = headerSettings.logo;
+          } else {
+            // Draw horizontal line to separate header
+            ctx.beginPath();
+            ctx.moveTo(20, headerHeight - 10);
+            ctx.lineTo(width - 20, headerHeight - 10);
+            ctx.strokeStyle = '#CCCCCC';
+            ctx.stroke();
+            
+            drawPrescriptionAndFooter();
+          }
+        } else {
+          // Simple default header
+          ctx.font = 'bold 18px Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#000000';
+          ctx.fillText('Al-Asad Clinic', width / 2, 35);
+          
+          // Draw horizontal line
+          ctx.beginPath();
+          ctx.moveTo(20, headerHeight - 10);
+          ctx.lineTo(width - 20, headerHeight - 10);
+          ctx.strokeStyle = '#CCCCCC';
+          ctx.stroke();
+          
+          drawPrescriptionAndFooter();
+        }
+        
+        function drawPrescriptionAndFooter() {
+          // Draw prescription image
+          ctx.drawImage(prescriptionImg, 0, headerHeight, width, prescriptionImg.height);
+          
+          // Add footer
+          const footerY = headerHeight + prescriptionImg.height + 10;
+          
+          ctx.save();
+          if (footerSettings) {
+            // Set font styles based on footer settings
+            ctx.font = `${footerSettings.fontStyle?.includes('bold') ? 'bold' : 'normal'} ${footerSettings.fontSize === 'small' ? '12px' : footerSettings.fontSize === 'medium' ? '14px' : '16px'} Arial, sans-serif`;
+            ctx.textAlign = (footerSettings.alignment || 'center') as CanvasTextAlign;
+            ctx.fillStyle = '#000000';
+            
+            // Draw horizontal line to separate footer
+            ctx.beginPath();
+            ctx.moveTo(20, footerY);
+            ctx.lineTo(width - 20, footerY);
+            ctx.strokeStyle = '#CCCCCC';
+            ctx.stroke();
+            
+            // Draw footer text
+            if (footerSettings.text) {
+              ctx.fillText(footerSettings.text, footerSettings.alignment === 'center' ? width / 2 : footerSettings.alignment === 'right' ? width - 20 : 20, footerY + 25);
+            }
+            
+            if (footerSettings.additionalInfo) {
+              ctx.font = `10px Arial, sans-serif`;
+              ctx.fillText(footerSettings.additionalInfo, footerSettings.alignment === 'center' ? width / 2 : footerSettings.alignment === 'right' ? width - 20 : 20, footerY + 45);
+            }
+          } else {
+            // Simple default footer
+            ctx.beginPath();
+            ctx.moveTo(20, footerY);
+            ctx.lineTo(width - 20, footerY);
+            ctx.strokeStyle = '#CCCCCC';
+            ctx.stroke();
+            
+            ctx.font = 'normal 14px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#000000';
+            ctx.fillText("Doctor's Signature", width / 2, footerY + 25);
+          }
+          ctx.restore();
+          
+          // Convert canvas to data URL and resolve
+          const combinedImageUrl = canvas.toDataURL('image/png');
+          resolve(combinedImageUrl);
+        }
+      };
+      
+      prescriptionImg.onerror = () => {
+        reject('Failed to load prescription image');
+      };
+      
+      prescriptionImg.src = prescription.imageUrl;
+    });
+  };
+
+  // Updated download function that uses the combined image
+  const downloadPrescription = async () => {
+    try {
+      toast({
+        title: 'Preparing download',
+        description: 'Creating prescription document...',
+      });
+      
+      const combinedImageUrl = await createCombinedPrescriptionImage();
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = combinedImageUrl;
+      link.download = `prescription-${patient?.mrNumber}-${new Date(prescription.date).toLocaleDateString().replace(/\//g, '-')}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: 'Download complete',
+        description: 'Prescription has been downloaded successfully.',
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: 'Download failed',
+        description: 'Failed to prepare prescription for download.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -217,16 +416,6 @@ const PrescriptionDetail: React.FC = () => {
       });
       console.error(error);
     }
-  };
-
-  const downloadPrescription = () => {
-    // Create a temporary link element
-    const link = document.createElement('a');
-    link.href = prescription.imageUrl;
-    link.download = `prescription-${patient.mrNumber}-${new Date(prescription.date).toLocaleDateString().replace(/\//g, '-')}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   return (

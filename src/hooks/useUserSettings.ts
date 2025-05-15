@@ -88,6 +88,15 @@ export const useUserSettings = () => {
         throw error;
       }
 
+      // Immediately apply settings to DOM
+      if (newSettings.sidebar_color || newSettings.background_color || newSettings.primary_color) {
+        applySettings({
+          ...settings,
+          ...newSettings,
+          user_id: user.id
+        });
+      }
+
       // Reload settings
       await loadSettings();
       
@@ -163,7 +172,9 @@ export const useUserSettings = () => {
 
   // Load settings on mount and when user changes
   useEffect(() => {
-    loadSettings();
+    if (user?.id) {
+      loadSettings();
+    }
   }, [user?.id]);
 
   return {
@@ -171,5 +182,6 @@ export const useUserSettings = () => {
     loading,
     saveSettings,
     loadSettings,
+    applySettings
   };
 };
