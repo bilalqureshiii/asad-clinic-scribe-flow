@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+
 const LoginForm: React.FC = () => {
   const [activeTab, setActiveTab] = useState("login");
   const [email, setEmail] = useState('');
@@ -60,7 +61,7 @@ const LoginForm: React.FC = () => {
   };
   return <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle className="text-clinic-navy text-2xl">Al-Asad Clinic</CardTitle>
+        <CardTitle className="text-clinic-navy text-2xl">Clinic Login</CardTitle>
         <CardDescription>
           {activeTab === "login" ? "Log in to access the clinic management system" : "Create a new account to get started"}
         </CardDescription>
@@ -118,4 +119,5 @@ const LoginForm: React.FC = () => {
       </CardFooter>
     </Card>;
 };
+
 export default LoginForm;
