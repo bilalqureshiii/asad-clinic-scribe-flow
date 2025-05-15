@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,22 +61,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await fetchAndSetProfile(userId);
   };
 
+  // Clear all auth state and local data
+  const clearAuthState = () => {
+    console.log('Clearing auth state');
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    
+    // Clear auth token from local storage
+    localStorage.removeItem('sb-izksnjgriegahapwyakp-auth-token');
+    
+    // Clear any other app-specific cached data
+    sessionStorage.clear();
+  };
+
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST with improved error handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        console.log('Auth state changed:', event);
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-
+        console.log('Auth state changed:', event, 'Current user role:', profile?.role);
+        
         if (currentSession?.user) {
+          setSession(currentSession);
+          setUser(currentSession.user);
           await fetchAndSetProfile(currentSession.user.id);
-        } else {
-          setProfile(null);
-          // If session is null and event is SIGNED_OUT, redirect to login page
-          if (event === 'SIGNED_OUT') {
-            navigate('/');
-          }
+        } else if (event === 'SIGNED_OUT') {
+          console.log('SIGNED_OUT event detected, clearing state');
+          clearAuthState();
+          window.location.href = '/'; // Force full page reload to reset all app state
         }
       }
     );
@@ -95,7 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {
@@ -158,20 +169,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
+      console.log('Logout initiated, current user role:', profile?.role);
+      
+      // First clear local state to ensure UI updates immediately
+      clearAuthState();
+      
+      // Then send logout request to Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         throw error;
       }
       
-      // Clear local storage and state
-      localStorage.removeItem('sb-izksnjgriegahapwyakp-auth-token');
-      setUser(null);
-      setSession(null);
-      setProfile(null);
+      console.log('Supabase logout successful');
       
-      // Navigate to login page
-      navigate('/');
+      // Force a full page reload rather than using React Router navigation
+      // This ensures all app state is completely reset
+      window.location.href = '/';
       
       toast({
         title: 'Logged out',
@@ -184,6 +198,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         description: error.message || 'An error occurred during logout',
         variant: 'destructive',
       });
+      
+      // Even if the API call fails, clear local state and redirect
+      clearAuthState();
+      window.location.href = '/';
     }
   };
 

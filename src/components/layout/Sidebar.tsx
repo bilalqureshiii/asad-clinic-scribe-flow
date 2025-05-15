@@ -33,13 +33,16 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   };
 
   const handleLogout = async () => {
+    console.log('Logout initiated from sidebar, user role:', profile?.role);
+    
     if (onClose) {
       onClose();
     }
     
     try {
+      // Call the logout function from AuthContext
       await logout();
-      // Navigate is now handled in the logout function itself
+      // Navigation is now handled within the logout function
     } catch (error) {
       console.error('Error during logout:', error);
     }
@@ -137,6 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm w-full text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+          data-testid="logout-button"
         >
           <LogOut className="h-4 w-4" />
           <span>Logout</span>
