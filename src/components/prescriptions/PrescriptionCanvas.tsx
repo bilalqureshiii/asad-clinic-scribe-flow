@@ -53,7 +53,7 @@ const PrescriptionCanvas: React.FC<PrescriptionCanvasProps> = ({
         <DrawingCanvas onSave={setPrescriptionImage} />
       ) : (
         <div className="space-y-4">
-          <div className="border p-2 rounded-md" style={{ maxHeight: '480px', overflow: 'auto' }}>
+          <div className="border p-2 rounded-md" style={{ maxHeight: '560px', overflow: 'auto' }}>
             <img 
               src={prescriptionImage} 
               alt="Prescription" 
