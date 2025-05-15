@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertCircle } from 'lucide-react';
 
 interface PrescriptionImageCardProps {
   prescription: {
-    imageUrl: string;
+    imageUrl?: string;
     notes?: string;
   };
   headerSettings: any | null;
@@ -53,11 +54,18 @@ const PrescriptionImageCard: React.FC<PrescriptionImageCardProps> = ({
           </div>
         )}
         
-        <img 
-          src={prescription.imageUrl} 
-          alt="Prescription" 
-          className="max-w-full border rounded-md" 
-        />
+        {prescription.imageUrl ? (
+          <img 
+            src={prescription.imageUrl} 
+            alt="Prescription" 
+            className="max-w-full border rounded-md" 
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center p-10 border rounded-md bg-gray-50">
+            <AlertCircle className="h-16 w-16 text-gray-400 mb-2" />
+            <p className="text-gray-500">No prescription image available</p>
+          </div>
+        )}
         
         {/* Preview with custom footer */}
         {footerSettings && (

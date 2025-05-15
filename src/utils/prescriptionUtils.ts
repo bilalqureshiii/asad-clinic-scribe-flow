@@ -3,13 +3,18 @@ import { toast } from '@/components/ui/use-toast';
 
 // Function to create a combined image with header, prescription image, and footer
 export const createCombinedPrescriptionImage = async (
-  prescription: { imageUrl: string },
+  prescription: { imageUrl?: string },
   headerSettings: any | null,
   footerSettings: any | null
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     if (!prescription) {
       reject('Prescription not found');
+      return;
+    }
+    
+    if (!prescription.imageUrl) {
+      reject('No prescription image available');
       return;
     }
 
@@ -191,13 +196,22 @@ export const createCombinedPrescriptionImage = async (
 
 // Function to download the combined prescription image
 export const downloadPrescription = async (
-  prescription: { imageUrl: string },
+  prescription: { imageUrl?: string },
   patient: { mrNumber: string },
   prescriptionDate: string,
   headerSettings: any | null,
   footerSettings: any | null
 ) => {
   try {
+    if (!prescription.imageUrl) {
+      toast({
+        title: 'Download failed',
+        description: 'No prescription image available to download.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     toast({
       title: 'Preparing download',
       description: 'Creating prescription document...',
@@ -221,7 +235,7 @@ export const downloadPrescription = async (
     console.error('Download error:', error);
     toast({
       title: 'Download failed',
-      description: 'Failed to prepare prescription for download.',
+      description: typeof error === 'string' ? error : 'Failed to prepare prescription for download.',
       variant: 'destructive',
     });
   }
@@ -234,6 +248,16 @@ export const printPrescription = (
   headerSettings: any,
   footerSettings: any
 ) => {
+  // Check if prescription has an image
+  if (!prescription.imageUrl) {
+    toast({
+      title: 'Print failed',
+      description: 'No prescription image available to print.',
+      variant: 'destructive',
+    });
+    return;
+  }
+
   // Create a printable version of the prescription in a new window
   const printWindow = window.open('', '', 'width=800,height=600');
   if (!printWindow) return;
