@@ -16,6 +16,7 @@ import Prescriptions from "./pages/Prescriptions";
 import PrescriptionDetail from "./pages/PrescriptionDetail";
 import NewPrescription from "./pages/NewPrescription";
 import Settings from "./pages/Settings";
+import AIAssistant from "./pages/AIAssistant";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="prescriptions" element={<Prescriptions />} />
                 <Route path="prescriptions/:prescriptionId" element={<PrescriptionDetail />} />
                 <Route path="prescriptions/new/:patientId" element={<NewPrescription />} />
+                <Route path="ai-assistant" element={<AIAssistant />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="*" element={<NotFound />} />
               </Route>

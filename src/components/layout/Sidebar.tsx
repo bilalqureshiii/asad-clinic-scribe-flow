@@ -3,14 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth';
-import { User, FileText, UserPlus, Calendar, Settings, LogOut, X } from 'lucide-react';
+import { User, FileText, UserPlus, Calendar, Settings, LogOut, X, Bot } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useGlobalSettings } from '@/hooks/useGlobalSettings';
+
 interface SidebarProps {
   onClose?: () => void;
 }
+
 const Sidebar: React.FC<SidebarProps> = ({
   onClose
 }) => {
@@ -32,9 +34,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       setLogo(settings.logo_url);
     }
   }, [settings]);
+
   const isActive = (path: string) => {
     return location.pathname === path;
   };
+
   const handleLogout = async () => {
     console.log('Logout initiated from sidebar, user role:', profile?.role);
     if (onClose) {
@@ -48,6 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       console.error('Error during logout:', error);
     }
   };
+
   const NavItem: React.FC<{
     href: string;
     icon: React.ReactNode;
@@ -62,6 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <span>{children}</span>
       </Link>;
   };
+
   return <div className="flex flex-col h-full p-4 text-sidebar-foreground w-full border-r border-slate-200 bg-[#164f0e]">
       {isMobile && <div className="flex justify-between items-center mb-4">
           <h2 className="font-semibold">Menu</h2>
@@ -97,6 +103,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           Prescriptions
         </NavItem>
         
+        {/* Only show AI Assistant menu item for doctors and admins */}
+        {(profile?.role === 'doctor' || profile?.role === 'admin') && (
+          <NavItem href="/ai-assistant" icon={<Bot className="h-4 w-4" />}>
+            AI Assistant
+          </NavItem>
+        )}
+        
         {(profile?.role === 'staff' || profile?.role === 'admin') && <NavItem href="/registration" icon={<UserPlus className="h-4 w-4" />}>
             New Registration
           </NavItem>}
@@ -114,4 +127,5 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
     </div>;
 };
+
 export default Sidebar;
