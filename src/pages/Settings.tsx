@@ -7,18 +7,18 @@ import UserRoleManagement from '@/components/settings/UserRoleManagement';
 import SystemConfig from '@/components/settings/SystemConfig';
 import OrganizationBranding from '@/components/settings/OrganizationBranding';
 import PrescriptionTemplate from '@/components/settings/PrescriptionTemplate';
-
 const Settings: React.FC = () => {
-  const { profile } = useAuth();
+  const {
+    profile
+  } = useAuth();
   const [activeTab, setActiveTab] = useState('roles');
-  
+
   // Check if user has admin role
   const isAdmin = profile?.role === 'admin';
 
   // If not admin, show access denied
   if (!isAdmin) {
-    return (
-      <div className="container mx-auto p-4">
+    return <div className="container mx-auto p-4">
         <Alert variant="destructive" className="mb-4">
           <Shield className="h-4 w-4" />
           <AlertTitle>Access Denied</AlertTitle>
@@ -26,13 +26,10 @@ const Settings: React.FC = () => {
             You don't have permission to access this page. Please contact an administrator if you need access.
           </AlertDescription>
         </Alert>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Settings & Administration</h1>
+  return <div className="container mx-auto p-4">
+      <h1 className="font-bold mb-6 text-4xl text-[#195110]">Settings & Administration</h1>
       
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
@@ -58,8 +55,6 @@ const Settings: React.FC = () => {
           <PrescriptionTemplate />
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default Settings;
