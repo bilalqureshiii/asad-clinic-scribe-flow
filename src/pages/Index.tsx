@@ -10,6 +10,7 @@ const Index = () => {
   useEffect(() => {
     // Automatically redirect to the dashboard if authenticated
     if (isAuthenticated) {
+      console.log('User is authenticated, redirecting to dashboard');
       navigate('/dashboard');
     } else {
       // If not authenticated, the AppLayout will show the login page

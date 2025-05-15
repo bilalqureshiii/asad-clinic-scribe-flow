@@ -17,7 +17,7 @@ export const supabase = createClient<Database>(
       storage: localStorage,
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: false // Explicitly disable URL detection to avoid navigation issues
+      detectSessionInUrl: false
     }
   }
 );
