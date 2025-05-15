@@ -7,16 +7,11 @@ import LoginPage from '@/pages/LoginPage';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Preloader } from '@/components/ui/preloader';
 
 const AppLayout: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
   const isMobile = useIsMobile();
   const [showSidebar, setShowSidebar] = useState(false);
-
-  if (isLoading) {
-    return <Preloader text="Loading application..." />;
-  }
 
   if (!isAuthenticated) {
     return <LoginPage />;

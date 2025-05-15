@@ -8,7 +8,6 @@ import FilteredPatientsCard from '@/components/dashboard/FilteredPatientsCard';
 import RecentListCard from '@/components/dashboard/RecentListCard';
 import PatientsList from '@/components/dashboard/PatientsList';
 import PrescriptionsList from '@/components/dashboard/PrescriptionsList';
-import { Preloader } from '@/components/ui/preloader';
 
 type TimeFilter = 'day' | 'week' | 'month' | 'year';
 
@@ -24,7 +23,6 @@ const Dashboard: React.FC = () => {
   } = useAuth();
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('month');
   const [lastRefreshDate, setLastRefreshDate] = useState<string>(new Date().toDateString());
-  const [loading, setLoading] = useState<boolean>(true);
 
   // Filter patients based on the selected time filter
   const filteredPatients = React.useMemo(() => {
@@ -49,14 +47,13 @@ const Dashboard: React.FC = () => {
 
   // Automatic refresh when date changes - useful for overnight sessions
   useEffect(() => {
-    const checkDateAndRefresh = async () => {
+    const checkDateAndRefresh = () => {
       const currentDate = new Date().toDateString();
       if (currentDate !== lastRefreshDate) {
         console.log('Date changed, refreshing data...');
-        await refreshData();
+        refreshData();
         setLastRefreshDate(currentDate);
       }
-      setLoading(false);
     };
 
     // Check immediately on mount
@@ -95,10 +92,6 @@ const Dashboard: React.FC = () => {
 
   const doctorPrescriptions = prescriptions.filter(prescription => prescription.doctorId === user?.id);
   const totalRevenue = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-
-  if (loading) {
-    return <Preloader text="Loading dashboard data..." />;
-  }
 
   return <div>
       <h1 className="text-3xl font-bold mb-6 text-[#1e6814]">Dashboard</h1>

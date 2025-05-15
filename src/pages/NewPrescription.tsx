@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useAuth } from '@/contexts/auth';
 import { Patient } from '@/types/patient';
@@ -11,7 +13,6 @@ import PrescriptionCanvas from '@/components/prescriptions/PrescriptionCanvas';
 import PrescriptionDetailsForm, { PrescriptionFormValues } from '@/components/prescriptions/PrescriptionDetailsForm';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Preloader } from '@/components/ui/preloader';
 
 const NewPrescription: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
@@ -125,7 +126,12 @@ const NewPrescription: React.FC = () => {
   };
 
   if (loading) {
-    return <Preloader text="Loading patient data..." />;
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-clinic-teal" />
+        <p className="mt-4 text-gray-600">Loading patient data...</p>
+      </div>
+    );
   }
 
   if (!patient) {
