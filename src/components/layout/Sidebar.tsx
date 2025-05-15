@@ -61,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <span>{children}</span>
       </Link>;
   };
-  return <div className="flex flex-col h-full p-4 text-sidebar-foreground w-full border-r border-slate-200 bg-[#4c9146]">
+  return <div className="flex flex-col h-full p-4 text-sidebar-foreground w-full border-r border-slate-200 bg-[#164f0e]">
       {isMobile && <div className="flex justify-between items-center mb-4">
           <h2 className="font-semibold">Menu</h2>
           <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-sidebar-accent">
