@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useClinic } from '@/contexts/ClinicContext';
+import { useAuth } from '@/contexts/auth';
 import { TabsContent, Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +14,7 @@ import PrescriptionsList from '@/components/dashboard/PrescriptionsList';
 const PatientDetail: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const { getPatientById, getPrescriptionsByPatientId, getPaymentsByPatientId } = useClinic();
+  const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState('details');
   
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -108,12 +111,15 @@ const PatientDetail: React.FC = () => {
           <p className="text-gray-500">MR#: {patient.mrNumber}</p>
         </div>
         <div className="mt-4 md:mt-0">
-          <Link to={`/prescriptions/new/${patientId}`}>
-            <Button className="bg-clinic-teal hover:opacity-90">
-              <FileText className="mr-2 h-4 w-4" />
-              New Prescription
-            </Button>
-          </Link>
+          {/* Only show New Prescription button for doctors and admins */}
+          {profile && profile.role !== 'staff' && (
+            <Link to={`/prescriptions/new/${patientId}`}>
+              <Button className="bg-clinic-teal hover:opacity-90">
+                <FileText className="mr-2 h-4 w-4" />
+                New Prescription
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
