@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { usePrescriptionTemplate } from '@/hooks/usePrescriptionTemplate';
+import { Preloader } from '@/components/ui/preloader';
 
 // Importing refactored components
 import PrescriptionHeader from '@/components/prescriptions/PrescriptionHeader';
@@ -24,14 +25,40 @@ const PrescriptionDetail: React.FC = () => {
   const { prescriptions, patients, payments, addPayment } = useClinic();
   const { headerSettings, footerSettings } = usePrescriptionTemplate();
   
-  const prescription = prescriptions.find(p => p.id === prescriptionId);
-  const patient = prescription ? patients.find(p => p.id === prescription.patientId) : null;
-  const prescriptionPayments = prescription ? payments.filter(p => p.prescriptionId === prescription.id) : [];
+  const [loading, setLoading] = useState(true);
+  const [prescription, setPrescription] = useState(null);
+  const [patient, setPatient] = useState(null);
+  const [prescriptionPayments, setPrescriptionPayments] = useState([]);
   
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [amount, setAmount] = useState(prescription?.fee || 0);
-  const [discount, setDiscount] = useState(prescription?.discount || 0);
+  const [amount, setAmount] = useState(0);
+  const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
+
+  useEffect(() => {
+    // Find prescription and related data
+    if (prescriptionId && prescriptions.length > 0) {
+      const foundPrescription = prescriptions.find(p => p.id === prescriptionId);
+      setPrescription(foundPrescription);
+      
+      if (foundPrescription) {
+        const foundPatient = patients.find(p => p.id === foundPrescription.patientId);
+        setPatient(foundPatient);
+        
+        const relatedPayments = payments.filter(p => p.prescriptionId === foundPrescription.id);
+        setPrescriptionPayments(relatedPayments);
+        
+        setAmount(foundPrescription.fee || 0);
+        setDiscount(foundPrescription.discount || 0);
+      }
+      
+      setLoading(false);
+    }
+  }, [prescriptionId, prescriptions, patients, payments]);
+
+  if (loading) {
+    return <Preloader text="Loading prescription..." />;
+  }
 
   if (!prescription || !patient) {
     return (
