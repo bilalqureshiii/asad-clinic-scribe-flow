@@ -1,11 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Patient, Prescription } from '@/types/patient';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Eye } from 'lucide-react';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useToast } from '@/components/ui/use-toast';
 import { prescriptionService } from '@/services/prescriptionService';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import PrescriptionImageCard from '@/components/prescriptions/PrescriptionImageCard';
+import { usePrescriptionTemplate } from '@/hooks/usePrescriptionTemplate';
 
 interface PrescriptionsListProps {
   prescriptions: Prescription[];
@@ -24,7 +27,10 @@ const PrescriptionsList: React.FC<PrescriptionsListProps> = ({
 }) => {
   const { refreshData } = useClinic();
   const { toast } = useToast();
+  const { headerSettings, footerSettings } = usePrescriptionTemplate();
   const displayPrescriptions = prescriptions.slice(0, limit);
+  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   
   // Function to handle prescription deletion
   const handleDelete = async (prescriptionId: string) => {
@@ -57,6 +63,11 @@ const PrescriptionsList: React.FC<PrescriptionsListProps> = ({
     }
   };
   
+  const handleViewPrescription = (prescription: Prescription) => {
+    setSelectedPrescription(prescription);
+    setDialogOpen(true);
+  };
+  
   return (
     <div className="space-y-4">
       {displayPrescriptions.map(prescription => {
@@ -73,6 +84,19 @@ const PrescriptionsList: React.FC<PrescriptionsListProps> = ({
                 <div className="text-sm text-gray-500">
                   {new Date(prescription.date).toLocaleDateString()}
                 </div>
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleViewPrescription(prescription);
+                  }}
+                >
+                  <Eye size={16} />
+                </Button>
                 
                 {showDelete && (
                   <Button 
@@ -96,6 +120,22 @@ const PrescriptionsList: React.FC<PrescriptionsListProps> = ({
       {prescriptions.length === 0 && (
         <div className="text-center text-gray-500">No prescriptions yet</div>
       )}
+      
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Prescription</DialogTitle>
+          </DialogHeader>
+          
+          {selectedPrescription && (
+            <PrescriptionImageCard
+              prescription={selectedPrescription}
+              headerSettings={headerSettings}
+              footerSettings={footerSettings}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
