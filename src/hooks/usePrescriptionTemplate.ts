@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useIsMobile } from './use-mobile';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 
 // Storage keys for header and footer settings
 const HEADER_STORAGE_KEY = 'al_asad_prescription_header';

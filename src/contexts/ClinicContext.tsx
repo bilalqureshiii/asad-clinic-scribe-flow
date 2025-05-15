@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { Patient, Prescription, Payment, MedicalHistory } from '@/types/patient';
 import { patientService } from '@/services/patientService';
 import { prescriptionService } from '@/services/prescriptionService';

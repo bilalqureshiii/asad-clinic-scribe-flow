@@ -5,7 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { useClinic } from '@/contexts/ClinicContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { Patient } from '@/types/patient';
 import { usePrescriptionTemplate } from '@/hooks/usePrescriptionTemplate';
 import PatientInfoCard from '@/components/prescriptions/PatientInfoCard';

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Users } from 'lucide-react';
 import { useClinic } from '@/contexts/ClinicContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import StatCard from '@/components/dashboard/StatCard';
 import FilteredPatientsCard from '@/components/dashboard/FilteredPatientsCard';
 import RecentListCard from '@/components/dashboard/RecentListCard';
