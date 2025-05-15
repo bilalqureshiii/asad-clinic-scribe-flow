@@ -70,8 +70,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               setProfile(profileData);
             }
           }, 0);
-        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-          console.log('SIGNED_OUT or USER_DELETED event detected, clearing state');
+        } else if (event === 'SIGNED_OUT') {
+          console.log('SIGNED_OUT event detected, clearing state');
           clearAuthState();
           setUser(null);
           setSession(null);
