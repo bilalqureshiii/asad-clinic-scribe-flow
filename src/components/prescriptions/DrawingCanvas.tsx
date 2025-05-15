@@ -11,7 +11,7 @@ interface DrawingCanvasProps {
 const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ 
   onSave, 
   width = 600, 
-  height = 800 
+  height = 480 // Changed from 800 to 480 (60% of original 800px height)
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
