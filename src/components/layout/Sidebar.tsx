@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { User, FileText, UserPlus, Calendar, Settings, LogOut, X } from 'lucide-react';
@@ -16,6 +16,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { profile, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [logo, setLogo] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { settings } = useGlobalSettings();
@@ -31,11 +32,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
     return location.pathname === path;
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (onClose) {
       onClose();
     }
-    logout();
+    
+    try {
+      await logout();
+      // Navigate is now handled in the logout function itself
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   const NavItem: React.FC<{ href: string; icon: React.ReactNode; children: React.ReactNode }> = ({ 

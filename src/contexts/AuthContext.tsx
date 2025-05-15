@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
@@ -16,7 +17,6 @@ interface AuthContextType {
   profile: UserProfile | null;
   session: Session | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, role?: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
   
   // Helper function to fetch and set user profile
   const fetchAndSetProfile = async (userId: string) => {
@@ -46,8 +46,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
         setProfile(data as UserProfile);
         
-        // Instead of directly calling loadSettings, we'll emit a custom event
-        // that other components can listen for
+        // Dispatch a custom event that other components can listen for
         window.dispatchEvent(new CustomEvent('profileLoaded', { 
           detail: { profileId: userId }
         }));
@@ -67,17 +66,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
+        console.log('Auth state changed:', event);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
-        setIsLoading(true);
 
         if (currentSession?.user) {
           await fetchAndSetProfile(currentSession.user.id);
         } else {
           setProfile(null);
+          // If session is null and event is SIGNED_OUT, redirect to login page
+          if (event === 'SIGNED_OUT') {
+            navigate('/');
+          }
         }
-        
-        setIsLoading(false);
       }
     );
 
@@ -87,18 +88,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
-        fetchAndSetProfile(currentSession.user.id).then(() => {
-          setIsLoading(false);
-        });
-      } else {
-        setIsLoading(false);
+        fetchAndSetProfile(currentSession.user.id);
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -161,12 +158,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Clear local storage and state
+      localStorage.removeItem('sb-izksnjgriegahapwyakp-auth-token');
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      
+      // Navigate to login page
+      navigate('/');
+      
       toast({
         title: 'Logged out',
         description: 'You have been logged out successfully',
       });
     } catch (error: any) {
+      console.error('Logout error:', error);
       toast({
         title: 'Logout failed',
         description: error.message || 'An error occurred during logout',
@@ -182,7 +194,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         profile,
         session,
         isAuthenticated: !!user,
-        isLoading,
         login,
         signup,
         logout,
