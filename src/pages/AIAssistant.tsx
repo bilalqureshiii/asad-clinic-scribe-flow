@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Send, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 type Message = {
   id: string;
@@ -16,6 +18,7 @@ type Message = {
 
 const AIAssistant: React.FC = () => {
   const { profile } = useAuth();
+  const { toast } = useToast();
   const [input, setInput] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -25,9 +28,19 @@ const AIAssistant: React.FC = () => {
       timestamp: new Date(),
     },
   ]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
+  // Auto-scroll to the bottom when messages update
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current;
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading) return;
 
     // Add user message
     const userMessage: Message = {
@@ -39,31 +52,47 @@ const AIAssistant: React.FC = () => {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Call Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: input,
+          conversationHistory: messages.slice(1), // Exclude the welcome message
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Add AI response
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: getAIResponse(input),
+        content: data.response,
         sender: 'ai',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMessage]);
-    }, 1000);
-  };
-
-  const getAIResponse = (query: string): string => {
-    const lowercaseQuery = query.toLowerCase();
-    
-    // Simple response system - in a real app, this would connect to an actual AI service
-    if (lowercaseQuery.includes('medication') || lowercaseQuery.includes('medicine')) {
-      return 'I can help you with medication information. Please provide specific details about the medication you need information on.';
-    } else if (lowercaseQuery.includes('diagnosis') || lowercaseQuery.includes('symptom')) {
-      return 'I can assist with diagnostic suggestions based on symptoms. Please note that my suggestions are not a replacement for clinical judgment.';
-    } else if (lowercaseQuery.includes('research') || lowercaseQuery.includes('study')) {
-      return 'I can provide summaries of recent medical research in various fields. What specific area are you interested in?';
-    } else {
-      return 'I\'m here to assist with medical information, treatment guidelines, medication details, and diagnostic suggestions. How can I help with your current case?';
+    } catch (error) {
+      console.error('Error calling AI assistant:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get response from AI assistant. Please try again later.",
+        variant: "destructive",
+      });
+      
+      // Add error message
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I'm sorry, I encountered an error. Please try again later.",
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -84,7 +113,7 @@ const AIAssistant: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col h-[calc(100%-120px)]">
-              <ScrollArea className="flex-1 pr-4 mb-4">
+              <ScrollArea className="flex-1 pr-4 mb-4" ref={scrollAreaRef}>
                 <div className="space-y-4">
                   {messages.map((message) => (
                     <div 
@@ -105,6 +134,17 @@ const AIAssistant: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="max-w-[80%] rounded-lg px-4 py-2 bg-gray-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></div>
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse delay-150"></div>
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse delay-300"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
               
@@ -114,15 +154,17 @@ const AIAssistant: React.FC = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && !isLoading) {
                       handleSendMessage();
                     }
                   }}
                   className="flex-1"
+                  disabled={isLoading}
                 />
                 <Button 
                   onClick={handleSendMessage} 
                   className="bg-[#1e6814] hover:bg-[#164f0e]"
+                  disabled={isLoading}
                 >
                   <Send className="h-4 w-4" />
                 </Button>
