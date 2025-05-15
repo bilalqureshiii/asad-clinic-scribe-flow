@@ -49,7 +49,8 @@ export const prescriptionService = {
       id: data.id,
       patientId: data.patient_id,
       doctorId: data.doctor_id,
-      date: data.date,
+      // Ensure consistent date format handling
+      date: new Date(data.date).toISOString(),
       imageUrl: data.image_url || undefined,
       notes: data.notes || undefined,
       status: data.status as 'pending' | 'processed' | 'completed',
@@ -75,7 +76,8 @@ export const prescriptionService = {
       id: prescription.id,
       patientId: prescription.patient_id,
       doctorId: prescription.doctor_id,
-      date: prescription.date,
+      // Ensure consistent date format handling
+      date: new Date(prescription.date).toISOString(),
       imageUrl: prescription.image_url || undefined,
       notes: prescription.notes || undefined,
       status: prescription.status as 'pending' | 'processed' | 'completed',

@@ -69,11 +69,11 @@ const NewPrescription: React.FC = () => {
     }
 
     try {
-      // Create prescription
+      // Create prescription with full ISO date string
       const newPrescription = await addPrescription({
         patientId: patient.id,
         doctorId: user.id,
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString(), // Use full ISO date instead of just the date part
         imageUrl: prescriptionImage,
         notes: data.notes || '',
         status: 'pending',
@@ -82,10 +82,10 @@ const NewPrescription: React.FC = () => {
         paymentStatus: 'pending',
       });
 
-      // Add medical history
+      // Add medical history with full ISO date
       if (diagnosis) {
         await addMedicalHistory(patient.id, {
-          date: new Date().toISOString().split('T')[0],
+          date: new Date().toISOString(), // Use full ISO date
           diagnosis: diagnosis,
           notes: data.notes || '',
           prescriptionId: newPrescription.id,
@@ -102,7 +102,7 @@ const NewPrescription: React.FC = () => {
             patientId: patient.id,
             amount: paymentAmount,
             discount: data.discount || 0,
-            date: new Date().toISOString().split('T')[0],
+            date: new Date().toISOString(), // Use full ISO date
             method: 'cash',
             notes: 'Payment for prescription',
           });
