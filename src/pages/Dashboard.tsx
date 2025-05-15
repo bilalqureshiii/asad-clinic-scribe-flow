@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Users } from 'lucide-react';
 import { useClinic } from '@/contexts/ClinicContext';
@@ -7,7 +8,9 @@ import FilteredPatientsCard from '@/components/dashboard/FilteredPatientsCard';
 import RecentListCard from '@/components/dashboard/RecentListCard';
 import PatientsList from '@/components/dashboard/PatientsList';
 import PrescriptionsList from '@/components/dashboard/PrescriptionsList';
+
 type TimeFilter = 'day' | 'week' | 'month' | 'year';
+
 const Dashboard: React.FC = () => {
   const {
     patients,
@@ -40,22 +43,30 @@ const Dashboard: React.FC = () => {
     return patients.filter(patient => new Date(patient.registrationDate) >= filterDate);
   }, [patients, timeFilter]);
 
-  // Fix the date comparison logic to correctly identify today's prescriptions
+  // Improved date comparison logic to correctly identify today's prescriptions
   const todayPrescriptions = React.useMemo(() => {
-    // Get today's date in YYYY-MM-DD format for comparison
     const today = new Date();
+    // Reset hours to start of day for comparison
     today.setHours(0, 0, 0, 0);
+    
     return prescriptions.filter(prescription => {
-      // Convert prescription date to Date object and reset time for fair comparison
+      // Convert prescription date string to Date object
       const prescriptionDate = new Date(prescription.date);
+      // Reset time to start of the day
       prescriptionDate.setHours(0, 0, 0, 0);
-
-      // Compare dates without time
-      return prescriptionDate.getTime() === today.getTime();
+      
+      // Compare only the date part (year, month, day)
+      return (
+        prescriptionDate.getFullYear() === today.getFullYear() &&
+        prescriptionDate.getMonth() === today.getMonth() &&
+        prescriptionDate.getDate() === today.getDate()
+      );
     });
   }, [prescriptions]);
+
   const doctorPrescriptions = prescriptions.filter(prescription => prescription.doctorId === user?.id);
   const totalRevenue = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+
   return <div>
       <h1 className="text-3xl font-bold mb-6 text-[#1e6814]">Dashboard</h1>
       
@@ -88,4 +99,5 @@ const Dashboard: React.FC = () => {
       </div>
     </div>;
 };
+
 export default Dashboard;
