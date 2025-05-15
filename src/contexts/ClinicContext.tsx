@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { Patient, Prescription, Payment, MedicalHistory } from '@/types/patient';
@@ -17,6 +16,7 @@ interface ClinicContextType {
   addPrescription: (prescription: Omit<Prescription, 'id'>) => Promise<Prescription>;
   getPrescriptionsByPatientId: (patientId: string) => Promise<Prescription[]>;
   deletePrescription: (id: string) => Promise<void>;
+  deletePatients: (patientIds: string[]) => Promise<void>;
   addPayment: (payment: Omit<Payment, 'id'>) => Promise<Payment>;
   getPaymentsByPatientId: (patientId: string) => Promise<Payment[]>;
   addMedicalHistory: (patientId: string, history: Omit<MedicalHistory, 'id'>) => Promise<MedicalHistory>;
@@ -171,6 +171,30 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  const deletePatients = async (patientIds: string[]): Promise<void> => {
+    try {
+      await patientService.deletePatients(patientIds);
+      
+      // Update local state by removing the deleted patients
+      setPatients(prevPatients => 
+        prevPatients.filter(patient => !patientIds.includes(patient.id))
+      );
+      
+      // Remove any prescriptions and payments associated with the deleted patients
+      setPrescriptions(prevPrescriptions => 
+        prevPrescriptions.filter(prescription => !patientIds.includes(prescription.patientId))
+      );
+      
+      setPayments(prevPayments => 
+        prevPayments.filter(payment => !patientIds.includes(payment.patientId))
+      );
+      
+    } catch (error) {
+      console.error("Error deleting patients:", error);
+      throw error;
+    }
+  };
+
   const addPayment = async (paymentData: Omit<Payment, 'id'>): Promise<Payment> => {
     try {
       const newPayment = await prescriptionService.addPayment(paymentData);
@@ -249,6 +273,7 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       addPrescription,
       getPrescriptionsByPatientId,
       deletePrescription,
+      deletePatients,
       addPayment,
       getPaymentsByPatientId,
       addMedicalHistory,

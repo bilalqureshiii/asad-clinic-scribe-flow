@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Patient, MedicalHistory } from '@/types/patient';
 
@@ -125,6 +124,55 @@ export const patientService = {
       registrationDate: data.registration_date,
       medicalHistory: []
     };
+  },
+  
+  async deletePatients(patientIds: string[]): Promise<void> {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) throw new Error("User must be logged in to delete patients");
+
+    // Start by deleting related records in medical_histories table
+    const { error: medicalHistoriesError } = await supabase
+      .from('medical_histories')
+      .delete()
+      .in('patient_id', patientIds);
+    
+    if (medicalHistoriesError) {
+      console.error('Error deleting medical histories:', medicalHistoriesError);
+      throw new Error(medicalHistoriesError.message);
+    }
+    
+    // Delete related prescriptions
+    const { error: prescriptionsError } = await supabase
+      .from('prescriptions')
+      .delete()
+      .in('patient_id', patientIds);
+      
+    if (prescriptionsError) {
+      console.error('Error deleting prescriptions:', prescriptionsError);
+      throw new Error(prescriptionsError.message);
+    }
+    
+    // Delete related payments
+    const { error: paymentsError } = await supabase
+      .from('payments')
+      .delete()
+      .in('patient_id', patientIds);
+      
+    if (paymentsError) {
+      console.error('Error deleting payments:', paymentsError);
+      throw new Error(paymentsError.message);
+    }
+    
+    // Finally delete the patients
+    const { error } = await supabase
+      .from('patients')
+      .delete()
+      .in('id', patientIds);
+    
+    if (error) {
+      console.error('Error deleting patients:', error);
+      throw new Error(error.message);
+    }
   },
   
   async addMedicalHistory(
