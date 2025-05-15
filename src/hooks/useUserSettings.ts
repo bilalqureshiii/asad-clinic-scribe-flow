@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,13 +12,13 @@ export interface UserSettings {
 }
 
 export const useUserSettings = () => {
-  const { user } = useAuth();
+  const auth = useAuth(); // Now this hook will be used outside the AuthProvider
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Load settings from database
-  const loadSettings = async () => {
-    if (!user) {
+  const loadSettings = useCallback(async () => {
+    if (!auth.user) {
       setLoading(false);
       return;
     }
@@ -29,7 +28,7 @@ export const useUserSettings = () => {
       const { data, error } = await supabase
         .from('user_settings')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', auth.user.id)
         .single();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
@@ -48,23 +47,23 @@ export const useUserSettings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [auth.user]);
 
   // Save settings to database
   const saveSettings = async (newSettings: Partial<UserSettings>) => {
-    if (!user) return;
+    if (!auth.user) return false;
 
     try {
       const updatedSettings = {
         ...newSettings,
-        user_id: user.id,
+        user_id: auth.user.id,
       };
 
       // Check if settings exist
       const { data: existingSettings } = await supabase
         .from('user_settings')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', auth.user.id)
         .single();
 
       let result;
@@ -74,7 +73,7 @@ export const useUserSettings = () => {
         result = await supabase
           .from('user_settings')
           .update(updatedSettings)
-          .eq('user_id', user.id);
+          .eq('user_id', auth.user.id);
       } else {
         // Insert new settings
         result = await supabase
@@ -93,7 +92,7 @@ export const useUserSettings = () => {
         applySettings({
           ...settings,
           ...newSettings,
-          user_id: user.id
+          user_id: auth.user.id
         });
       }
 
@@ -170,12 +169,25 @@ export const useUserSettings = () => {
     return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
   };
 
-  // Load settings on mount and when user changes
+  // Listen for profile loaded events
   useEffect(() => {
-    if (user?.id) {
+    const handleProfileLoaded = () => {
+      if (auth.user) {
+        loadSettings();
+      }
+    };
+
+    window.addEventListener('profileLoaded', handleProfileLoaded);
+    
+    // Also load settings when user changes
+    if (auth.user?.id) {
       loadSettings();
     }
-  }, [user?.id]);
+    
+    return () => {
+      window.removeEventListener('profileLoaded', handleProfileLoaded);
+    };
+  }, [auth.user?.id, loadSettings]);
 
   return {
     settings,

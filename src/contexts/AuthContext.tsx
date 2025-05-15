@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { useUserSettings } from '@/hooks/useUserSettings';
 
 interface UserProfile {
   id: string;
@@ -21,6 +20,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, role?: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshProfile: (userId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,9 +30,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Import the useUserSettings hook to apply settings when profile changes
-  const { loadSettings } = useUserSettings();
   
   // Helper function to fetch and set user profile
   const fetchAndSetProfile = async (userId: string) => {
@@ -49,17 +46,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
         setProfile(data as UserProfile);
         
-        // Load user settings immediately when profile is set
-        try {
-          await loadSettings();
-        } catch (settingsError) {
-          console.error('Failed to load user settings:', settingsError);
-        }
+        // Instead of directly calling loadSettings, we'll emit a custom event
+        // that other components can listen for
+        window.dispatchEvent(new CustomEvent('profileLoaded', { 
+          detail: { profileId: userId }
+        }));
       }
     } catch (error) {
       console.error('Profile fetch error:', error);
       setProfile(null);
     }
+  };
+
+  // Create a public method to refresh the profile that can be called by other components
+  const refreshProfile = async (userId: string) => {
+    await fetchAndSetProfile(userId);
   };
 
   useEffect(() => {
@@ -185,6 +186,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         signup,
         logout,
+        refreshProfile,
       }}
     >
       {children}
