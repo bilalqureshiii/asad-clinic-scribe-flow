@@ -4,23 +4,14 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/LoginPage';
-import { Loader2, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const AppLayout: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
   const isMobile = useIsMobile();
   const [showSidebar, setShowSidebar] = useState(false);
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-clinic-teal" />
-        <span className="ml-2 text-lg">Loading...</span>
-      </div>
-    );
-  }
 
   if (!isAuthenticated) {
     return <LoginPage />;
