@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -56,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     icon,
     children
   }) => {
-    return <Link to={href} onClick={onClose} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all", isActive(href) ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}>
+    return <Link to={href} onClick={onClose} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all", isActive(href) ? "bg-[#497a42] text-sidebar-accent-foreground" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}>
         {icon}
         <span>{children}</span>
       </Link>;
