@@ -151,6 +151,14 @@ const PatientDetail: React.FC = () => {
                   <p className="capitalize">{patient.gender}</p>
                 </div>
                 <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">Age</p>
+                  <p>{patient.age ? `${patient.age} years` : 'Not provided'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">Weight</p>
+                  <p>{patient.weight ? `${patient.weight} kg` : 'Not provided'}</p>
+                </div>
+                <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">Contact Number</p>
                   <p>{patient.contactNumber}</p>
                 </div>

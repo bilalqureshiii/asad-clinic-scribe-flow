@@ -37,6 +37,14 @@ const PrescriptionPatientCard: React.FC<PrescriptionPatientCardProps> = ({ patie
             <div className="text-sm font-medium text-gray-500">Gender</div>
             <div className="capitalize">{patient.gender}</div>
           </div>
+          <div>
+            <div className="text-sm font-medium text-gray-500">Age</div>
+            <div>{patient.age ? `${patient.age} years` : 'Not provided'}</div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-gray-500">Weight</div>
+            <div>{patient.weight ? `${patient.weight} kg` : 'Not provided'}</div>
+          </div>
         </div>
         
         <Button
