@@ -11,6 +11,7 @@ interface ClinicContextType {
   payments: Payment[];
   isLoading: boolean;
   addPatient: (patient: Omit<Patient, 'id' | 'mrNumber' | 'registrationDate' | 'medicalHistory'>) => Promise<Patient>;
+  updatePatient: (id: string, patientData: Partial<Omit<Patient, 'id' | 'mrNumber' | 'registrationDate' | 'medicalHistory'>>) => Promise<Patient>;
   getPatientById: (id: string) => Promise<Patient | null>;
   getPatientByMrNumber: (mrNumber: string) => Promise<Patient | null>;
   addPrescription: (prescription: Omit<Prescription, 'id'>) => Promise<Prescription>;
@@ -122,6 +123,24 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       return newPatient;
     } catch (error) {
       console.error("Error adding patient:", error);
+      throw error;
+    }
+  };
+
+  const updatePatient = async (id: string, patientData: Partial<Omit<Patient, 'id' | 'mrNumber' | 'registrationDate' | 'medicalHistory'>>): Promise<Patient> => {
+    try {
+      const updatedPatient = await patientService.updatePatient(id, patientData);
+      
+      // Update local state
+      setPatients(prevPatients => 
+        prevPatients.map(patient => 
+          patient.id === id ? updatedPatient : patient
+        )
+      );
+      
+      return updatedPatient;
+    } catch (error) {
+      console.error("Error updating patient:", error);
       throw error;
     }
   };
@@ -268,6 +287,7 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       payments,
       isLoading,
       addPatient,
+      updatePatient,
       getPatientById,
       getPatientByMrNumber,
       addPrescription,

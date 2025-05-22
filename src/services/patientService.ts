@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Patient, MedicalHistory } from '@/types/patient';
 
@@ -132,6 +131,53 @@ export const patientService = {
       age: data.age || undefined,
       weight: data.weight || undefined,
       medicalHistory: []
+    };
+  },
+  
+  async updatePatient(
+    id: string, 
+    patientData: Partial<Omit<Patient, 'id' | 'mrNumber' | 'registrationDate' | 'medicalHistory'>>
+  ): Promise<Patient> {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) throw new Error("User must be logged in to update patients");
+
+    // Convert to snake_case for the database
+    const { data, error } = await supabase
+      .from('patients')
+      .update({
+        first_name: patientData.firstName,
+        last_name: patientData.lastName,
+        date_of_birth: patientData.dateOfBirth,
+        gender: patientData.gender,
+        contact_number: patientData.contactNumber,
+        email: patientData.email,
+        address: patientData.address,
+        age: patientData.age,
+        weight: patientData.weight
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating patient:', error);
+      throw new Error(error.message);
+    }
+    
+    return {
+      id: data.id,
+      mrNumber: data.mr_number,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      dateOfBirth: data.date_of_birth,
+      gender: data.gender as 'male' | 'female' | 'other',
+      contactNumber: data.contact_number,
+      email: data.email || undefined,
+      address: data.address || undefined,
+      registrationDate: data.registration_date,
+      age: data.age || undefined,
+      weight: data.weight || undefined,
+      medicalHistory: [] // Will be loaded separately if needed
     };
   },
   
