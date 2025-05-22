@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { Patient, MedicalHistory } from '@/types/patient';
 
@@ -24,6 +25,8 @@ export const patientService = {
       email: patient.email || undefined,
       address: patient.address || undefined,
       registrationDate: patient.registration_date,
+      age: patient.age || undefined,
+      weight: patient.weight || undefined,
       medicalHistory: [] // Will be loaded separately if needed
     }));
   },
@@ -78,6 +81,8 @@ export const patientService = {
       email: data.email || undefined,
       address: data.address || undefined,
       registrationDate: data.registration_date,
+      age: data.age || undefined,
+      weight: data.weight || undefined,
       medicalHistory
     };
   },
@@ -100,6 +105,8 @@ export const patientService = {
         contact_number: patient.contactNumber,
         email: patient.email,
         address: patient.address,
+        age: patient.age,
+        weight: patient.weight,
         created_by: userData.user.id,
         mr_number: '' // Provide an empty string that will be overridden by the database trigger
       })
@@ -122,6 +129,8 @@ export const patientService = {
       email: data.email || undefined,
       address: data.address || undefined,
       registrationDate: data.registration_date,
+      age: data.age || undefined,
+      weight: data.weight || undefined,
       medicalHistory: []
     };
   },

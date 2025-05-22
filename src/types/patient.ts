@@ -11,6 +11,8 @@ export interface Patient {
   address?: string;
   registrationDate: string;
   medicalHistory?: MedicalHistory[];
+  age?: number;
+  weight?: number;
 }
 
 export interface MedicalHistory {

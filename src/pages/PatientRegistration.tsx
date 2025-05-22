@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -12,6 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClinic } from '@/contexts/ClinicContext';
 import { useToast } from '@/components/ui/use-toast';
+
 const formSchema = z.object({
   firstName: z.string().min(1, {
     message: 'First name is required'
@@ -31,9 +33,23 @@ const formSchema = z.object({
   email: z.string().email({
     message: 'Invalid email'
   }).optional().or(z.literal('')),
-  address: z.string().optional()
+  address: z.string().optional(),
+  age: z.number({
+    required_error: 'Age is required',
+    invalid_type_error: 'Age must be a number'
+  }).int().positive({
+    message: 'Age must be a positive number'
+  }),
+  weight: z.number({
+    required_error: 'Weight is required',
+    invalid_type_error: 'Weight must be a number'
+  }).positive({
+    message: 'Weight must be a positive number'
+  })
 });
+
 type FormValues = z.infer<typeof formSchema>;
+
 const PatientRegistration: React.FC = () => {
   const {
     addPatient
@@ -42,6 +58,7 @@ const PatientRegistration: React.FC = () => {
   const {
     toast
   } = useToast();
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -51,9 +68,12 @@ const PatientRegistration: React.FC = () => {
       gender: 'male',
       contactNumber: '',
       email: '',
-      address: ''
+      address: '',
+      age: undefined,
+      weight: undefined
     }
   });
+
   const onSubmit = async (data: FormValues) => {
     try {
       // Ensure all required fields are present and convert optional fields as needed
@@ -64,13 +84,18 @@ const PatientRegistration: React.FC = () => {
         gender: data.gender,
         contactNumber: data.contactNumber,
         email: data.email || undefined,
-        address: data.address || undefined
+        address: data.address || undefined,
+        age: data.age,
+        weight: data.weight
       };
+      
       const newPatient = await addPatient(patientData);
+      
       toast({
         title: 'Patient registered successfully',
         description: `MR Number: ${newPatient.mrNumber}`
       });
+      
       navigate(`/patients/${newPatient.id}`);
     } catch (error) {
       toast({
@@ -81,6 +106,7 @@ const PatientRegistration: React.FC = () => {
       console.error(error);
     }
   };
+
   return <div>
       <h1 className="font-bold mb-6 text-[#195110] text-4xl">New Patient Registration</h1>
       
@@ -161,6 +187,37 @@ const PatientRegistration: React.FC = () => {
                       </FormControl>
                       <FormMessage />
                     </FormItem>} />
+                    
+                <FormField control={form.control} name="age" render={({
+                field
+              }) => <FormItem>
+                      <FormLabel>Age</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="Enter age" 
+                          {...field} 
+                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>} />
+                    
+                <FormField control={form.control} name="weight" render={({
+                field
+              }) => <FormItem>
+                      <FormLabel>Weight (kg)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01"
+                          placeholder="Enter weight" 
+                          {...field} 
+                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>} />
               </div>
               
               <FormField control={form.control} name="address" render={({
@@ -186,4 +243,5 @@ const PatientRegistration: React.FC = () => {
       </Card>
     </div>;
 };
+
 export default PatientRegistration;

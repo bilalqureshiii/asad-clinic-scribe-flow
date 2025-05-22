@@ -74,6 +74,7 @@ export type Database = {
       patients: {
         Row: {
           address: string | null
+          age: number | null
           contact_number: string
           created_at: string
           created_by: string
@@ -86,9 +87,11 @@ export type Database = {
           mr_number: string
           registration_date: string
           updated_at: string
+          weight: number | null
         }
         Insert: {
           address?: string | null
+          age?: number | null
           contact_number: string
           created_at?: string
           created_by: string
@@ -101,9 +104,11 @@ export type Database = {
           mr_number: string
           registration_date?: string
           updated_at?: string
+          weight?: number | null
         }
         Update: {
           address?: string | null
+          age?: number | null
           contact_number?: string
           created_at?: string
           created_by?: string
@@ -116,6 +121,7 @@ export type Database = {
           mr_number?: string
           registration_date?: string
           updated_at?: string
+          weight?: number | null
         }
         Relationships: []
       }
